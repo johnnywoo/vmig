@@ -1,0 +1,21 @@
+Usage: vmig [options] command
+
+Options:
+  --config=file
+  --connection=uri
+  --databases="db db2"
+  --migrations-path=path
+  --schemes-path=path
+  --migrations-table=db.tbl
+
+Commands:
+  d,diff [--reverse]  Displays changes in DB scheme as SQL commands
+  s,status            Displays DB changes and unapplied migrations
+  m,migrate           Runs unapplied migrations
+  c,create [--force]  Creates a migration with current changes to DB scheme
+  r,reset             Reverts DB scheme to that from scheme dump files
+  a,approve           Marks all migrations as applied, updates dump files
+  up   [--from-file | --from-db] filename
+  down [--from-file | --from-db] filename
+  help                Description of each command and its options
+  init                Creates .vmig.cnf in current directory

@@ -1,0 +1,80 @@
+Migrations config is read from '.vmig.cnf', which is searched in current
+working directory and its parents.
+
+Note: you should not symlink vmig executable into your PATH, because it calls
+vmig.php relative to its own position and therefore link would not work.
+Instead, you should either make an alias or a proxy script with absolute path.
+
+Usage: vmig [options] command
+
+Options:
+
+  --config=file
+    Use this file as config instead of searching for .vmig.cnf.
+
+  --migrations-table=dbname.tblname
+    Table name for migration data. The table will be created if not exists;
+    database must exist.
+
+  --migrations-path=path
+    Path to migrations folder.
+
+  --schemes-path=path
+    Path to schemes folder.
+
+  --databases='dbname dbname dbname'
+    List of database names which are watched for migrations.
+
+  --connection=mysql://user:pass@host:port
+    MySQL connection. If not given, default parameters are read from mysql
+    console client (essentially from ~/.my.cnf). You may review them by running
+    'mysql --print-defaults'.
+
+Commands:
+
+  diff [--reverse]
+    Compares dump and database, exits with status 1 if changes present;
+    prints found differences as SQL (commands to convert dumped scheme into
+    actual).
+    Options:
+      --reverse   Invert diff direction; print commands to convert actual scheme
+                  into dumped.
+
+  status
+    Shows database changes and out-of-sync migrations in human-readable format.
+    Install Console_Color package from PEAR to get colored output.
+
+  migrate
+    Migrates the database to current version (as defined by migration files).
+    1. Finds applied migrations that are not present in filesystem, runs them
+    down.
+    2. Finds non-applied migrations, runs them up.
+
+  create [--force]
+    Creates a new migration by comparing dump and database. The migration is
+    placed in migrations_path from the config and also printed to stdout.
+    If dump and database are equal, the empty migration is not created.
+    Options:
+      --force     Create an empty migration even if no changes were found.
+
+  reset
+    Alters database to structure from dump.
+
+  approve
+    Marks all existing migrations as applied without actually running them.
+    Also dumps database schemes.
+
+  up   [--from-file | --from-db] filename [filename ...]
+  down [--from-file | --from-db] filename [filename ...]
+    Apply or rollback one migration. If migration with given filename exists
+    both in db and file, you need to specify source with one of parameters;
+    otherwise parameter is optional.
+    Options:
+      --from-file   Use migration from filesystem.
+      --from-db     Use migration from database.
+
+  help
+    This message.
+
+  init
+    Places default .vmig.cnf in current working directory.

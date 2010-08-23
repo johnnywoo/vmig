@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# simply calling php script with same args
+php "$(cd `dirname "$0"`; pwd)/vmig.php" "$@"
