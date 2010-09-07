@@ -239,20 +239,25 @@ class Vmig
 	}
 
 
-	function apply_one_migration($name, $direction, $source)
+	public function apply_one_migration($name, $direction, $source)
 	{
 		$file_migration = $this->_get_migration_from_file_by_name($name);
-		$db_migration = $this->_get_migration_from_db_by_name($name);
+		$db_migration   = $this->_get_migration_from_db_by_name($name);
 
-		if($source === null && count($file_migration) && count($db_migration))
-			throw new Vmig_Error("From file or from db?");
+		if(empty($source))
+		{
+			// if source is not given, but the file is equal to db version,
+			// there's no need to choose between two
+			if($file_migration == $db_migration)
+				$file_migration = array();
 
-		$migration = array();
-		if($source == 'from-file' || ($source === null && !count($db_migration)))
-			$migration = $file_migration;
+			if(count($file_migration) && count($db_migration))
+				throw new Vmig_Error("Db and file versions of {$name} are different.\nYou need to pick one with --from-file or --from-db option.");
 
-		if($source == 'from-db' || ($source === null && !count($file_migration)))
-			$migration = $db_migration;
+			$source = count($file_migration) ? 'from-file' : 'from-db';
+		}
+
+		$migration = ($source == 'from-file') ? $file_migration : $db_migration;
 
 		if(!count($migration))
 			throw new Vmig_Error("Migration {$name} not found");
@@ -261,8 +266,6 @@ class Vmig
 			$this->_migrate_up($migration);
 		else
 			$this->_migrate_down($migration);
-
-		return true;
 	}
 
 
