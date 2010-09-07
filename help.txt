@@ -12,23 +12,27 @@ Options:
   --config=file
     Use this file as config instead of searching for .vmig.cnf.
 
-  --migrations-table=dbname.tblname
-    Table name for migration data. The table will be created if not exists;
-    database must exist.
-
-  --migrations-path=path
-    Path to migrations folder.
-
-  --schemes-path=path
-    Path to schemes folder.
-
-  --databases='dbname dbname dbname'
-    List of database names which are watched for migrations.
-
   --connection=mysql://user:pass@host:port
     MySQL connection. If not given, default parameters are read from mysql
     console client (essentially from ~/.my.cnf). You may review them by running
     'mysql --print-defaults'.
+
+  --databases='dbname dbname dbname'
+    List of database names which are watched for migrations.
+
+  --fail-on-down[=no]
+    Makes vmig fail whenever it has to roll a migration down. Useful in
+    production environment.
+
+  --migrations-path=path
+    Path to migrations folder.
+
+  --migrations-table=dbname.tblname
+    Table name for migration data. The table will be created if not exists;
+    database must exist.
+
+  --schemes-path=path
+    Path to schemes folder.
 
 Commands:
 

@@ -546,6 +546,10 @@ class Vmig
 			$down_migration = substr($migration, $pos);
 
 			echo "\n-- down: {$name}\n\n";
+
+			if($this->config->fail_on_down)
+				throw new Vmig_Error('Down migrations are forbidden by fail-on-down configuration option');
+
 			$this->_apply_migration($down_migration);
 			$name = $this->get_db()->escape($name);
 			$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name = '{$name}'");

@@ -78,6 +78,7 @@ class Vmig_Config
 	public $migration_db    = '';
 	public $migration_table = '';
 	public $connection      = '';
+	public $fail_on_down    = '';
 
 	public $databases = array();
 
@@ -105,6 +106,8 @@ class Vmig_Config
 		// mysql driver will try to find the connection in .my.cnf
 		// so this is not a required parameter
 		$this->connection = isset($params['connection']) ? $params['connection'] : '';
+
+		$this->fail_on_down = isset($params['fail-on-down']);
 	}
 
 	private static function absolutize_path($path, $cwd)

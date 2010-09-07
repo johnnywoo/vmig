@@ -4,9 +4,10 @@ Options:
   --config=file
   --connection=uri
   --databases="db db2"
+  --fail-on-down
   --migrations-path=path
-  --schemes-path=path
   --migrations-table=db.tbl
+  --schemes-path=path
 
 Commands:
   d,diff [--reverse]  Displays changes in DB scheme as SQL commands
