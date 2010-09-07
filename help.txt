@@ -54,10 +54,12 @@ Commands:
     down.
     2. Finds non-applied migrations, runs them up.
 
-  create [--force]
+  create [--force] [name]
     Creates a new migration by comparing dump and database. The migration is
     placed in migrations_path from the config and also printed to stdout.
     If dump and database are equal, the empty migration is not created.
+    If 'name' is given, it is used as a name for the migration. Otherwise
+    current git branch name is used (except for master).
     Options:
       --force     Create an empty migration even if no changes were found.
 

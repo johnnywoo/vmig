@@ -92,7 +92,18 @@ try
 		case 'c':
 			list($settings, $args) = args('', array('force'), $args);
 			$is_force = isset($settings['force']);
-			$branch_name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
+
+			if(!empty($args))
+			{
+				$branch_name = reset($args);
+			}
+			else
+			{
+				$branch_name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
+				if($branch_name == 'master')
+					$branch_name = ''; // vmig will ask for a name
+			}
+
 			$sql = $vmig->create_migrations($is_force, $branch_name ? '_' . $branch_name : '');
 			if(trim($sql) != '')
 			{

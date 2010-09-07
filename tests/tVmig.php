@@ -73,7 +73,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field100` int(11) NOT NULL;");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field101` varchar(255) NOT NULL;");
-		$this->exec('create');
+		$this->exec('create create');
 		$migration = $this->get_last_migration_from_files();
 
 		$this->assertContains('ADD COLUMN `field100` int(11) NOT NULL', $migration);
@@ -87,7 +87,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field100` int(11) NOT NULL;");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field101` varchar(255) NOT NULL;");
-		$this->exec('create');
+		$this->exec('create approve');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 
@@ -116,7 +116,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field100` int(11) NOT NULL;");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field101` varchar(255) NOT NULL;");
-		$this->exec('create');
+		$this->exec('create migrate_up');
 		$this->exec_reset();
 
 		try
@@ -144,7 +144,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field100` int(11) NOT NULL;");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field101` varchar(255) NOT NULL;");
-		$this->exec('create');
+		$this->exec('create migrate_down');
 		$this->exec('approve');
 		$this->remove_migrations_files();
 		$this->exec('migrate');
@@ -161,7 +161,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 				PRIMARY KEY  (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 		");
-		$this->exec('create');
+		$this->exec('create table_down');
 		$this->exec('approve');
 		$this->remove_migrations_files();
 		$this->exec('migrate');
@@ -178,7 +178,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 				PRIMARY KEY  (`id`)
 			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
 		");
-		$this->exec('create');
+		$this->exec('create table_up');
 		$this->exec_reset();
 		$this->exec('migrate');
 
@@ -190,7 +190,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	function test_addIndexDown()
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field1` (`field1`);");
-		$this->exec('create');
+		$this->exec('create index_down');
 		$this->exec('approve');
 		$this->remove_migrations_files();
 		$this->exec('migrate');
@@ -202,7 +202,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	function test_addIndexUp()
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field1` (`field1`);");
-		$this->exec('create');
+		$this->exec('create index_up');
 		$this->exec_reset();
 		$this->exec('migrate');
 
@@ -223,7 +223,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
-		$this->exec('create');
+		$this->exec('create fk_down');
 		$this->exec('approve');
 		$this->remove_migrations_files();
 		$this->exec('migrate');
@@ -244,7 +244,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
-		$this->exec('create');
+		$this->exec('create fk_up');
 		$this->exec_reset();
 		$this->exec('migrate');
 
@@ -256,7 +256,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	function test_addViewDown()
 	{
 		$this->db->query("CREATE VIEW `{$this->test_dbname}`.`view1` AS (SELECT id AS iid FROM `{$this->test_dbname}`.`test1`);");
-		$this->exec('create');
+		$this->exec('create view_down');
 		$this->exec('approve');
 
 		$this->remove_migrations_files();
@@ -270,7 +270,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("CREATE VIEW `{$this->test_dbname}`.`view1` AS (SELECT id AS iid FROM `{$this->test_dbname}`.`test1`);");
 
-		$this->exec('create');
+		$this->exec('create view_up');
 		$this->exec_reset();
 		$this->exec('migrate');
 
@@ -283,7 +283,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		// field3 <-> field4
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` MODIFY `field3` int(11) NOT NULL default '0' AFTER `field4`");
-		$this->exec('create');
+		$this->exec('create pos34');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 		$this->assertContains("MODIFY `field4` int(11) NOT NULL default '0' AFTER `field2`", $migration);
@@ -293,7 +293,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	function test_fieldsPos2after4()
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` MODIFY `field2` varchar(255) NOT NULL default '' AFTER `field4`");
-		$this->exec('create');
+		$this->exec('create pos2after4');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 		$this->assertContains("MODIFY `field2` varchar(255) NOT NULL default '' AFTER `field4`", $migration);
@@ -305,7 +305,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		// field1 <-> field5
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` MODIFY `field1` int(11) NOT NULL default '0' AFTER `field5`");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` MODIFY `field5` int(11) NOT NULL default '0' FIRST");
-		$this->exec('create');
+		$this->exec('create pos15');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 		$this->assertContains("MODIFY `field1` int(11) NOT NULL default '0' AFTER `field4`", $migration);
@@ -317,7 +317,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` MODIFY `field5` int(11) NOT NULL default '0' AFTER `field2`");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` DROP COLUMN `field2`");
-		$this->exec('create');
+		$this->exec('create pos4after_deleted');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 		$this->assertContains("MODIFY `field5` int(11) NOT NULL default '0' AFTER `field1`", $migration);

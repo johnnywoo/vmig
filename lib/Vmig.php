@@ -134,11 +134,21 @@ class Vmig
 	}
 
 
-	function create_migrations($force = false, $name_suffix = '')
+	public function create_migrations($force = false, $name_suffix = '')
 	{
 		$m_up = $this->_create_migrations();
 		if(empty($m_up) && $force === false)
 			return false;
+
+		if($name_suffix == '')
+		{
+			do
+			{
+				echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
+				$branch_name = fgets(STDIN);
+				$branch_name = trim($branch_name);
+			} while (!preg_match('/^\w+$/', $branch_name)); // don't allow empty names and weird chars
+		}
 
 		$migrations = "-- Migration Up\n\n";
 		$migrations .= $m_up . "\n\n";
