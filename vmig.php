@@ -50,11 +50,25 @@ try
 			copy(dirname(__FILE__).'/example.vmig.cnf', Vmig_Config::DEFAULT_CONF_FILE);
 
 			$config = Vmig_Config::load(Vmig_Config::DEFAULT_CONF_FILE);
-			echo "Creating directory for db schemes: {$config->schemes_path}\n";
-			mkdir($config->schemes_path, 0777, true);
-			echo "Creating directory for migrations: {$config->migrations_path}\n";
-			mkdir($config->migrations_path, 0777, true);
+			if(!file_exists($config->schemes_path))
+			{
+				echo "Creating directory for db schemes: {$config->schemes_path}\n";
+				mkdir($config->schemes_path, 0777, true);
+			}
+			else
+			{
+				echo "Using directory for db schemes: {$config->schemes_path}\n";
+			}
 
+			if(!file_exists($config->migrations_path))
+			{
+				echo "Creating directory for migrations: {$config->migrations_path}\n";
+				mkdir($config->migrations_path, 0777, true);
+			}
+			else
+			{
+				echo "Using directory for migrations: {$config->migrations_path}\n";
+			}
 			break;
 
 		case 'diff':
