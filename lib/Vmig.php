@@ -145,9 +145,10 @@ class Vmig
 			do
 			{
 				echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
-				$branch_name = fgets(STDIN);
-				$branch_name = trim($branch_name);
-			} while (!preg_match('/^\w+$/', $branch_name)); // don't allow empty names and weird chars
+				$name_suffix = fgets(STDIN);
+				$name_suffix = trim($name_suffix);
+			} while (!preg_match('/^\w+$/', $name_suffix)); // don't allow empty names and weird chars
+			$name_suffix = '_'.$name_suffix;
 		}
 
 		$migrations = "-- Migration Up\n\n";
