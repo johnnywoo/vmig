@@ -354,7 +354,19 @@ class Vmig
 		$migration = trim($migration)."\n";
 
 		echo $migration;
-		$this->get_db()->multi_query($migration);
+
+		try
+		{
+			$this->get_db()->multi_query($migration);
+		}
+		catch(Vmig_MysqlError $e)
+		{
+			// ignore empty query error
+			if($e->getCode() != Vmig_MysqlError::ER_EMPTY_QUERY)
+			{
+				throw $e;
+			}
+		}
 	}
 
 

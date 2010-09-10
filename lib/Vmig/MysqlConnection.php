@@ -1,5 +1,7 @@
 <?
 
+require_once dirname(__FILE__).'/MysqlError.php';
+
 class Vmig_MysqlConnection
 {
 	public $host     = '';
@@ -57,7 +59,7 @@ class Vmig_MysqlConnection
 		$this->_connect();
 		$result = $this->_connection->query($sql);
 		if(!$result)
-			throw new Vmig_Error('DB error: '.$this->_connection->error);
+			throw new Vmig_MysqlError('DB error: '.$this->_connection->error, $this->_connection->errno);
 		return $result;
 	}
 
@@ -78,7 +80,7 @@ class Vmig_MysqlConnection
 		} while ($this->_connection->next_result());
 
 		if($this->_connection->errno)
-			throw new Vmig_Error('DB error: '.$this->_connection->error);
+			throw new Vmig_MysqlError('DB error: '.$this->_connection->error, $this->_connection->errno);
 
 		return true;
 	}
