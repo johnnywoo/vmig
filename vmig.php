@@ -20,6 +20,7 @@ try
 		'schemes-path=',
 		'migrations-table=',
 		'connection=',
+		'fail-on-down',
 	);
 	list($settings, $args) = args('h', $options);
 
@@ -95,16 +96,29 @@ try
 
 			if(!empty($args))
 			{
-				$branch_name = reset($args);
+				$name = reset($args);
+				// here empty name is allowed
 			}
 			else
 			{
-				$branch_name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
-				if($branch_name == 'master')
-					$branch_name = ''; // vmig will ask for a name
+				// assuming git branch name
+				$name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
+				if($name == 'master')
+					$name = '';
+
+				// if there is no name, let's ask for it
+				if($name == '')
+				{
+					do
+					{
+						echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
+						$name = fgets(STDIN);
+						$name = trim($name);
+					} while (!preg_match('/^\w+$/', $name)); // don't allow empty names and weird chars
+				}
 			}
 
-			$sql = $vmig->create_migrations($is_force, $branch_name ? '_' . $branch_name : '');
+			$sql = $vmig->create_migrations($is_force, $name ? '_' . $name : '');
 			if(trim($sql) != '')
 			{
 				echo $sql;

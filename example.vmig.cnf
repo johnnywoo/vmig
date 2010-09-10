@@ -24,3 +24,6 @@ databases=migrations
 ; client (essentially from ~/.my.cnf). You may review them by running
 ; 'mysql --print-defaults'.
 ;connection=mysql://user:pass@host:port
+
+; Prevent any migration from running down (useful for production)
+;fail-on-down=yes

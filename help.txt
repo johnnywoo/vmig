@@ -20,7 +20,7 @@ Options:
   --databases='dbname dbname dbname'
     List of database names which are watched for migrations.
 
-  --fail-on-down[=no]
+  --fail-on-down
     Makes vmig fail whenever it has to roll a migration down. Useful in
     production environment.
 

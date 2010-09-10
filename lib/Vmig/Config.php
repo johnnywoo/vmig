@@ -107,7 +107,7 @@ class Vmig_Config
 		// so this is not a required parameter
 		$this->connection = isset($params['connection']) ? $params['connection'] : '';
 
-		$this->fail_on_down = isset($params['fail-on-down']);
+		$this->fail_on_down = isset($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no';
 	}
 
 	private static function absolutize_path($path, $cwd)

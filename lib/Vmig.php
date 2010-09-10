@@ -140,17 +140,6 @@ class Vmig
 		if(empty($m_up) && $force === false)
 			return false;
 
-		if($name_suffix == '')
-		{
-			do
-			{
-				echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
-				$name_suffix = fgets(STDIN);
-				$name_suffix = trim($name_suffix);
-			} while (!preg_match('/^\w+$/', $name_suffix)); // don't allow empty names and weird chars
-			$name_suffix = '_'.$name_suffix;
-		}
-
 		$migrations = "-- Migration Up\n\n";
 		$migrations .= $m_up . "\n\n";
 		$migrations .= "-- Migration Down\n\n";
