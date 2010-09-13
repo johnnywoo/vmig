@@ -26,7 +26,8 @@ class Vmig
 			$dump = $this->_create_dump($db);
 			$scheme_from = new Vmig_Scheme($dump);
 
-			$dump = file_get_contents("{$this->config->schemes_path}/{$db}.scheme.sql");
+			$dump_file = "{$this->config->schemes_path}/{$db}.scheme.sql";
+			$dump = file_exists($dump_file) ? file_get_contents($dump_file) : '';
 			$scheme_to = new Vmig_Scheme($dump);
 
 			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db);
@@ -306,7 +307,8 @@ class Vmig
 			$dump = $this->_create_dump($db);
 			$scheme_from = new Vmig_Scheme($dump);
 
-			$dump = file_get_contents("{$this->config->schemes_path}/{$db}.scheme.sql");
+			$dump_file = "{$this->config->schemes_path}/{$db}.scheme.sql";
+			$dump = file_exists($dump_file) ? file_get_contents($dump_file) : '';
 			$scheme_to = new Vmig_Scheme($dump);
 
 			if(!$up)
@@ -339,6 +341,10 @@ class Vmig
 	 */
 	private function _create_dump($dbname, $dump_file = '')
 	{
+		// migrations table might be in a watched DB
+		// so if it does not exist, it will be skipped on first run if we don't create it here
+		$this->_create_migration_table_if_necessary();
+
 		$dump = Vmig_Dump::create($this->get_db(), $dbname);
 
 		if($dump_file != '')
@@ -396,6 +402,8 @@ class Vmig
 		$condition = '1=1';
 		if($name)
 			$condition = "name='" . $this->get_db()->escape($name) . "'";
+
+		$this->_create_migration_table_if_necessary();
 
 		$r = $this->get_db()->query("SELECT `name`, `query`, `sha1` FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE {$condition} ORDER BY `name` " . $addition);
 		$db_migrations = array();
