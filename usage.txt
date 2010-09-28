@@ -13,8 +13,9 @@ Commands:
   d,diff [--reverse]  Displays changes in DB scheme as SQL commands
   s,status            Displays DB changes and unapplied migrations
   m,migrate           Runs unapplied migrations
-  c,create [--force] [name]
-                      Creates a migration with current changes to DB scheme
+  c,create [--force] [--no-approve] [name]
+                      Creates a migration with current changes to DB scheme.
+                      Approves it, if "--no-approve" not set.
   r,reset             Reverts DB scheme to that from scheme dump files
   a,approve           Marks all migrations as applied, updates dump files
   up   [--from-file | --from-db] filename

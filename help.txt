@@ -54,14 +54,17 @@ Commands:
     down.
     2. Finds non-applied migrations, runs them up.
 
-  create [--force] [name]
+  create [--force] [--no-approve] [name]
     Creates a new migration by comparing dump and database. The migration is
     placed in migrations_path from the config and also printed to stdout.
     If dump and database are equal, the empty migration is not created.
     If 'name' is given, it is used as a name for the migration. Otherwise
     current git branch name is used (except for master).
+    After being created, the migration is approved.
     Options:
-      --force     Create an empty migration even if no changes were found.
+      --force       Create an empty migration even if no changes were found.
+      --no-approve  If set, the migration will not be auto-approved. You
+                    have to run "vmig approve" after that.
 
   reset
     Alters database to structure from dump.

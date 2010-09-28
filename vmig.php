@@ -91,8 +91,9 @@ try
 
 		case 'create':
 		case 'c':
-			list($settings, $args) = args('', array('force'), $args);
+			list($settings, $args) = args('', array('force', 'no-approve'), $args);
 			$is_force = isset($settings['force']);
+            $no_approve = isset($settings['no-approve']);
 
 			if(!empty($args))
 			{
@@ -122,8 +123,13 @@ try
 			if(trim($sql) != '')
 			{
 				echo $sql;
-				echo "-- Do not forget to APPROVE the created migration before committing!\n";
-				echo "-- Otherwise database dump in the repository will be out of sync.\n";
+                if($no_approve) {
+				    echo "-- Do not forget to APPROVE the created migration before committing!\n";
+				    echo "-- Otherwise database dump in the repository will be out of sync.\n";
+                } else {
+                    echo "-- Approving created migration...\n";
+                    $vmig->approve_migration();
+                }
 			}
 			break;
 
