@@ -123,10 +123,13 @@ try
 			if(trim($sql) != '')
 			{
 				echo $sql;
-                if($no_approve) {
+                if($no_approve)
+                {
 				    echo "-- Do not forget to APPROVE the created migration before committing!\n";
 				    echo "-- Otherwise database dump in the repository will be out of sync.\n";
-                } else {
+                }
+                else
+                {
                     echo "-- Approving created migration...\n";
                     $vmig->approve_migration();
                 }
