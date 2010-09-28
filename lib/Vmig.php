@@ -72,7 +72,8 @@ class Vmig
 
         // If a migration was renamed - locate it, delete from DB and approve from file
         $renamed_migrations = array_intersect($migrations_down, $migrations_up);
-        foreach($renamed_migrations as $migration_name => $migration) {
+        foreach($renamed_migrations as $migration_name => $migration)
+        {
             $name = $this->get_db()->escape($migration_name);
 			$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name='{$name}';");
             unset($migrations_down[$migration_name]);
