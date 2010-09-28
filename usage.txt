@@ -16,7 +16,9 @@ Commands:
   c,create [-f, --force] [-A, --no-approve] [name]
                       Creates a migration with current changes to DB scheme.
                       Approves it, if "--no-approve" not set.
-  r,reset             Reverts DB scheme to that from scheme dump files
+  r,reset [db1[.table1] [db2 ...]] Reverts DB scheme to that from scheme dump
+                      files. If one or more DBs/tables given, vmig will reset
+                      only them.
   a,approve           Marks all migrations as applied, updates dump files
   up   [-f, --from-file | -d, --from-db] filename
   down [-f, --from-file | -d, --from-db] filename

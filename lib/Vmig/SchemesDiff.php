@@ -6,10 +6,10 @@ class Vmig_SchemesDiff
 	private $_db_name;
 
 
-	public function __construct($scheme1, $scheme2, $db_name)
+	public function __construct($scheme1, $scheme2, $db_name, $tables = array())
 	{
 		$this->_db_name = $db_name;
-		$this->_create_diff($scheme1, $scheme2);
+		$this->_create_diff($scheme1, $scheme2, $tables);
 	}
 
 
@@ -181,7 +181,7 @@ class Vmig_SchemesDiff
 	 * @param  $scheme1 MigrationsTool_Scheme
 	 * @param  $scheme2 MigrationsTool_Scheme
 	 */
-	private function _create_diff($scheme1, $scheme2)
+	private function _create_diff($scheme1, $scheme2, $tables = array())
 	{
 		$scheme1_data = $scheme1->get_data();
 		$scheme2_data = $scheme2->get_data();
@@ -202,6 +202,9 @@ class Vmig_SchemesDiff
 
 		foreach($scheme2_data['tables'] as $table_name => $table)
 		{
+            if(sizeof($tables) && !in_array($table_name, $tables))
+                continue;
+
 			if(!key_exists($table_name, $scheme1_data['tables']))
 			{
 				$changes['drop_tables'][$table_name] = $table;
@@ -219,6 +222,9 @@ class Vmig_SchemesDiff
 
 		foreach($scheme1_data['tables'] as $table_name => $table)
 		{
+            if(sizeof($tables) && !in_array($table_name, $tables))
+                continue;
+
 			if(!key_exists($table_name, $scheme2_data['tables']))
 			{
 				$changes['add_tables'][$table_name] = $table;

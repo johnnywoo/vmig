@@ -66,8 +66,9 @@ Commands:
       --no-approve  If set, the migration will not be auto-approved. You
                     have to run "vmig approve" after that.
 
-  reset
+  reset [db1[.table1] [db2 ...]]
     Alters database to structure from dump.
+    You can tell vmig what to reset by setting db1, db2 etc.
 
   approve
     Marks all existing migrations as applied without actually running them.

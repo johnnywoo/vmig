@@ -96,7 +96,7 @@ class Vmig
 	}
 
 
-	function reset_db()
+	function reset_db($for_what = array())
 	{
 		$not_applied_migrations = $this->_find_not_applied_migrations();
 		$unnecessary_migrations = $this->_find_old_unnecessary_migrations();
@@ -127,7 +127,7 @@ class Vmig
 			} while ($answer != "y");
 		}
 
-		$migration_down = $this->_create_migrations(false);
+		$migration_down = $this->_create_migrations(false, $for_what);
 		if(empty($migration_down))
 			return false;
 
@@ -287,8 +287,13 @@ class Vmig
 	}
 
 
-	function _create_migrations($up = true)
+	function _create_migrations($up = true, $for_what = array())
 	{
+        if(!sizeof($for_what)) {
+            $databases = $this->config->databases;
+        } else {
+            $databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
+        }
 		$scheme_from = array();
 		$scheme_to = array();
 		$migrations = array(
@@ -302,7 +307,7 @@ class Vmig
 			'alter_tables'      => array(),
 		);
 
-		foreach($this->config->databases as $db)
+		foreach($databases as $db)
 		{
 			$dump = $this->_create_dump($db);
 			$scheme_from = new Vmig_Scheme($dump);
@@ -314,7 +319,12 @@ class Vmig
 			if(!$up)
 				list($scheme_from, $scheme_to) = array($scheme_to, $scheme_from);
 
-			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db);
+            if(!array_key_exists($db, $for_what)) {
+                $tables = array();
+            } else {
+                $tables = $for_what[$db];
+            }
+			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db, $tables);
 			$migration = $diff->render_migration();
 
 			$migrations = array_merge_recursive($migrations, $migration);
