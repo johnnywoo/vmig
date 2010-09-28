@@ -289,9 +289,12 @@ class Vmig
 
 	function _create_migrations($up = true, $for_what = array())
 	{
-        if(!sizeof($for_what)) {
+        if(!sizeof($for_what))
+        {
             $databases = $this->config->databases;
-        } else {
+        }
+        else
+        {
             $databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
         }
 		$scheme_from = array();
@@ -319,9 +322,12 @@ class Vmig
 			if(!$up)
 				list($scheme_from, $scheme_to) = array($scheme_to, $scheme_from);
 
-            if(!array_key_exists($db, $for_what)) {
+            if(!array_key_exists($db, $for_what))
+            {
                 $tables = array();
-            } else {
+            }
+            else
+            {
                 $tables = $for_what[$db];
             }
 			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db, $tables);

@@ -10,7 +10,8 @@ define('EXIT_OK',       0);
 define('EXIT_MODIFIED', 1);
 define('EXIT_ERROR',    2);
 
-try {
+try
+{
 	$options = array(
 		'help',
 		'config=',
@@ -138,13 +139,17 @@ try {
 		case 'reset':
 		case 'r':
             $for_what = array();
-            foreach($args as $v) {
+            foreach($args as $v)
+            {
                 @list($db, $table) = explode('.', $v);
-                if($db) {
-                    if(!array_key_exists($db,$for_what)) {
+                if($db)
+                {
+                    if(!array_key_exists($db,$for_what))
+                    {
                         $for_what[$db] = array();
                     }
-                    if($table) {
+                    if($table)
+                    {
                         $for_what[$db][] = $table;
                     }
                 }
