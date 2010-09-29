@@ -10,41 +10,40 @@ define('EXIT_OK',       0);
 define('EXIT_MODIFIED', 1);
 define('EXIT_ERROR',    2);
 
-try
-{
+try {
 
-    $options = array(
-        'h'=>'help',
-		'c:'=>'config=',
-		'd:'=>'databases=',
-		'm:'=>'migrations-path=',
-		's:'=>'schemes-path=',
-		'M:'=>'migrations-table=',
-		'C:'=>'connection=',
-		'f:'=>'fail-on-down',
-    );
-    
-    list($settings, $args) = args(implode('',array_keys($options)), $options);
-    foreach($settings as $key=>$value)
-    {
-        if(strlen($key) == 1) //short option
-        {
-            $short_name = $key;
-            if($value && $value{0} == ':') //requires argument
-            {
-                $short_name .= ':';
-                $full_name = substr($options[$short_name], 0, -1);
-                $value = substr($value, 1);
-            }
-            else
-            {
-                $full_name = $options[$short_name];
-            }
+	$options = array(
+		'h'  => 'help',
+		'c:' => 'config=',
+		'd:' => 'databases=',
+		'm:' => 'migrations-path=',
+		's:' => 'schemes-path=',
+		'M:' => 'migrations-table=',
+		'C:' => 'connection=',
+		'f:' => 'fail-on-down',
+	);
 
-            $settings[$full_name] = $value;
-            unset($settings[$key]);
-        }
-    }
+	list($settings, $args) = args(implode('', array_keys($options)), $options);
+	foreach($settings as $key=>$value)
+	{
+		if (strlen($key) == 1) //short option
+		{
+			$short_name = $key;
+			if ($value && $value[0] == ':') //requires argument
+			{
+				$short_name .= ':';
+				$full_name = substr($options[$short_name], 0, -1);
+				$value = substr($value, 1);
+			}
+			else
+			{
+				$full_name = $options[$short_name];
+			}
+
+			$settings[$full_name] = $value;
+			unset($settings[$key]);
+		}
+	}
 
 
 	if(empty($args))
@@ -115,8 +114,8 @@ try
 		case 'create':
 		case 'c':
 			list($settings, $args) = args('fA', array('force', 'no-approve'), $args);
-			$is_force = isset($settings['force']) || isset($settings['f']);
-            $no_approve = isset($settings['no-approve'])|| isset($settings['A']);
+			$is_force   = isset($settings['force']) || isset($settings['f']);
+			$no_approve = isset($settings['no-approve']) || isset($settings['A']);
 
 			if(!empty($args))
 			{
@@ -146,16 +145,16 @@ try
 			if(trim($sql) != '')
 			{
 				echo $sql;
-                if($no_approve)
-                {
-				    echo "-- Do not forget to APPROVE the created migration before committing!\n";
-				    echo "-- Otherwise database dump in the repository will be out of sync.\n";
-                }
-                else
-                {
-                    echo "-- Approving created migration...\n";
-                    $vmig->approve_migration();
-                }
+				if($no_approve)
+				{
+					echo "-- Do not forget to APPROVE the created migration before committing!\n";
+					echo "-- Otherwise database dump in the repository will be out of sync.\n";
+				}
+				else
+				{
+					echo "-- Approving created migration...\n";
+					$vmig->approve_migration();
+				}
 			}
 			break;
 
@@ -183,8 +182,8 @@ try
 		case 'down':
 			list($settings, $args) = args('fd', array('from-file', 'from-db'), $args);
 
-            $is_from_file = isset($settings['from-file']) || isset($settings['f']);
-            $is_from_db = isset($settings['from-db']) || isset($settings['d']);
+			$is_from_file = isset($settings['from-file']) || isset($settings['f']);
+			$is_from_db = isset($settings['from-db']) || isset($settings['d']);
 
 			if(!count($args))
 				throw new Vmig_Error('Migration name is not specified');
