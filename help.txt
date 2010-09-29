@@ -9,34 +9,34 @@ Usage: vmig [options] command
 
 Options:
 
-  --config=file
+  -c:file,  --config=file
     Use this file as config instead of searching for .vmig.cnf.
 
-  --connection=mysql://user:pass@host:port
+  -C:mysql://user:pass@host:port,  --connection=mysql://user:pass@host:port
     MySQL connection. If not given, default parameters are read from mysql
     console client (essentially from ~/.my.cnf). You may review them by running
     'mysql --print-defaults'.
 
-  --databases='dbname dbname dbname'
+  -d:'dbname dbname dbname',  --databases='dbname dbname dbname'
     List of database names which are watched for migrations.
 
-  --fail-on-down
+  -f,  --fail-on-down
     Makes vmig fail whenever it has to roll a migration down. Useful in
     production environment.
 
-  --migrations-path=path
+  -m:path,  --migrations-path=path
     Path to migrations folder.
 
-  --migrations-table=dbname.tblname
+  -M:dbname.tblname,  --migrations-table=dbname.tblname
     Table name for migration data. The table will be created if not exists;
     database must exist.
 
-  --schemes-path=path
+  -s:path,  --schemes-path=path
     Path to schemes folder.
 
 Commands:
 
-  diff [--reverse]
+  diff [-r, --reverse]
     Compares dump and database, exits with status 1 if changes present;
     prints found differences as SQL (commands to convert dumped scheme into
     actual).
@@ -54,7 +54,7 @@ Commands:
     down.
     2. Finds non-applied migrations, runs them up.
 
-  create [--force] [--no-approve] [name]
+  create [-f, --force] [-A, --no-approve] [name]
     Creates a new migration by comparing dump and database. The migration is
     placed in migrations_path from the config and also printed to stdout.
     If dump and database are equal, the empty migration is not created.
@@ -73,8 +73,8 @@ Commands:
     Marks all existing migrations as applied without actually running them.
     Also dumps database schemes.
 
-  up   [--from-file | --from-db] filename [filename ...]
-  down [--from-file | --from-db] filename [filename ...]
+  up   [-f, --from-file | -d, --from-db] filename [filename ...]
+  down [-f, --from-file | -d, --from-db] filename [filename ...]
     Apply or rollback one migration. If migration with given filename exists
     both in db and file, you need to specify source with one of parameters;
     otherwise parameter is optional.

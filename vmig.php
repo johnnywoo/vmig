@@ -12,17 +12,40 @@ define('EXIT_ERROR',    2);
 
 try
 {
-	$options = array(
-		'help',
-		'config=',
-		'databases=',
-		'migrations-path=',
-		'schemes-path=',
-		'migrations-table=',
-		'connection=',
-		'fail-on-down',
-	);
-	list($settings, $args) = args('h', $options);
+
+    $options = array(
+        'h'=>'help',
+		'c:'=>'config=',
+		'd:'=>'databases=',
+		'm:'=>'migrations-path=',
+		's:'=>'schemes-path=',
+		'M:'=>'migrations-table=',
+		'C:'=>'connection=',
+		'f:'=>'fail-on-down',
+    );
+    
+    list($settings, $args) = args(implode('',array_keys($options)), $options);
+    foreach($settings as $key=>$value)
+    {
+        if(strlen($key) == 1) //short option
+        {
+            $short_name = $key;
+            if($value && $value{0} == ':') //requires argument
+            {
+                $short_name .= ':';
+                $full_name = substr($options[$short_name], 0, -1);
+                $value = substr($value, 1);
+            }
+            else
+            {
+                $full_name = $options[$short_name];
+            }
+
+            $settings[$full_name] = $value;
+            unset($settings[$key]);
+        }
+    }
+
 
 	if(empty($args))
 	{
@@ -74,8 +97,8 @@ try
 
 		case 'diff':
 		case 'd':
-			list($settings, $args) = args('', array('reverse'), $args);
-			$is_reverse = isset($settings['reverse']);
+			list($settings, $args) = args('r', array('reverse'), $args);
+			$is_reverse = isset($settings['reverse']) || isset($settings['r']);
 			$diff = $vmig->diff($is_reverse);
 			if(!empty($diff))
 			{
@@ -91,9 +114,9 @@ try
 
 		case 'create':
 		case 'c':
-			list($settings, $args) = args('', array('force', 'no-approve'), $args);
-			$is_force = isset($settings['force']);
-            $no_approve = isset($settings['no-approve']);
+			list($settings, $args) = args('fA', array('force', 'no-approve'), $args);
+			$is_force = isset($settings['force']) || isset($settings['f']);
+            $no_approve = isset($settings['no-approve'])|| isset($settings['A']);
 
 			if(!empty($args))
 			{
@@ -158,18 +181,21 @@ try
 
 		case 'up':
 		case 'down':
-			list($settings, $args) = args('', array('from-file', 'from-db'), $args);
+			list($settings, $args) = args('fd', array('from-file', 'from-db'), $args);
+
+            $is_from_file = isset($settings['from-file']) || isset($settings['f']);
+            $is_from_db = isset($settings['from-db']) || isset($settings['d']);
 
 			if(!count($args))
 				throw new Vmig_Error('Migration name is not specified');
 
-			if(isset($settings['from-file']) && isset($settings['from-db']))
+			if($is_from_file && $is_from_db)
 				throw new Vmig_Error('Options --from-file and --from-db cannot be used at the same time');
 
 			$source = null;
-			if(isset($settings['from-file']))
+			if($is_from_file)
 				$source = 'from-file';
-			if(isset($settings['from-db']))
+			if($is_from_db)
 				$source = 'from-db';
 
 			foreach($args as $arg)
