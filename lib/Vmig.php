@@ -50,7 +50,7 @@ class Vmig
 		echo $status_text;
 	}
 
-	/*
+	/**
 	 * Locate and fix renamed migrations
 	 *
 	 * Get migrations from DB and compare them by SHA1 with
@@ -61,18 +61,18 @@ class Vmig
 	 * @param &array $migrations_down A reference to Migrations Down array to be cleaned
 	 * @return array $renamed_migrations Format: 'db_migration_name'=>'file_migration_name'
 	 */
-	private function _fix_renamed_migrations(&$migrations_up = array(), &$migrations_down = array())
+	private function _fix_renamed_migrations(&$migrations_up, &$migrations_down)
 	{
 		$renamed_migrations = array();
 
 		// If a migration was renamed - locate it and update its filename
 		$db_migrations = $this->_get_migrations_from_db(false, true, '');
 		$file_migrations = $this->_get_migrations_from_files();
-		foreach($db_migrations as $db_migration_name => $db_migration)
+		foreach($file_migrations as $file_migration_name)
 		{
-			foreach($file_migrations as $file_migration_name)
+			$file_sha1 = sha1_file($this->config->migrations_path . '/' . $file_migration_name);
+			foreach($db_migrations as $db_migration_name => $db_migration)
 			{
-				$file_sha1 = sha1_file($this->config->migrations_path . '/' . $file_migration_name);
 				if($db_migration['sha1'] == $file_sha1 && $db_migration_name != $file_migration_name)
 				{
 					$renamed_migrations[$db_migration_name] = $file_migration_name;
@@ -82,15 +82,10 @@ class Vmig
 
 		foreach($renamed_migrations as $db_name => $file_name)
 		{
+			unset($migrations_down[$db_name], $migrations_up[$file_name]);
+			$db_name = $this->get_db()->escape($db_name);
+			$file_name = $this->get_db()->escape($file_name);
 			$this->get_db()->query("UPDATE `{$this->config->migration_db}`.`{$this->config->migration_table}` SET name='{$file_name}' WHERE name='{$db_name}';");
-			if(key_exists($db_name, $migrations_down))
-			{
-				unset($migrations_down[$db_name]);
-			}
-			if(key_exists($file_name, $migrations_up))
-			{
-				unset($migrations_up[$file_name]);
-			}
 		}
 
 		return $renamed_migrations;
