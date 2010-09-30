@@ -10,42 +10,20 @@ define('EXIT_OK',       0);
 define('EXIT_MODIFIED', 1);
 define('EXIT_ERROR',    2);
 
-try {
-
+try
+{
 	$options = array(
-		'h'  => 'help',
-		'c:' => 'config=',
-		'd:' => 'databases=',
-		'm:' => 'migrations-path=',
-		's:' => 'schemes-path=',
-		'M:' => 'migrations-table=',
-		'C:' => 'connection=',
-		'f:' => 'fail-on-down',
+		'help',
+		'config=',
+		'databases=',
+		'migrations-path=',
+		'schemes-path=',
+		'migrations-table=',
+		'connection=',
+		'fail-on-down',
 	);
 
-	list($settings, $args) = args(implode('', array_keys($options)), $options);
-	foreach($settings as $key=>$value)
-	{
-		if (strlen($key) == 1) //short option
-		{
-			$short_name = $key;
-			if ($value && $value[0] == ':') //requires argument
-			{
-				$short_name .= ':';
-				$full_name = substr($options[$short_name], 0, -1);
-				$value = substr($value, 1);
-			}
-			else
-			{
-				$full_name = $options[$short_name];
-			}
-
-			$settings[$full_name] = $value;
-			unset($settings[$key]);
-		}
-	}
-
-
+	list($settings, $args) = args('', $options);
 	if(empty($args))
 	{
 		$cmd = (isset($settings['h']) || isset($settings['help'])) ? 'help' : 'usage';

@@ -9,29 +9,29 @@ Usage: vmig [options] command
 
 Options:
 
-  -c:file,  --config=file
+  --config=file
     Use this file as config instead of searching for .vmig.cnf.
 
-  -C:mysql://user:pass@host:port,  --connection=mysql://user:pass@host:port
+  --connection=mysql://user:pass@host:port
     MySQL connection. If not given, default parameters are read from mysql
     console client (essentially from ~/.my.cnf). You may review them by running
     'mysql --print-defaults'.
 
-  -d:'dbname dbname dbname',  --databases='dbname dbname dbname'
+  --databases='dbname dbname dbname'
     List of database names which are watched for migrations.
 
-  -f,  --fail-on-down
+  --fail-on-down
     Makes vmig fail whenever it has to roll a migration down. Useful in
     production environment.
 
-  -m:path,  --migrations-path=path
+  --migrations-path=path
     Path to migrations folder.
 
-  -M:dbname.tblname,  --migrations-table=dbname.tblname
+  --migrations-table=dbname.tblname
     Table name for migration data. The table will be created if not exists;
     database must exist.
 
-  -s:path,  --schemes-path=path
+  --schemes-path=path
     Path to schemes folder.
 
 Commands:

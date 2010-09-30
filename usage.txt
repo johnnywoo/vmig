@@ -1,13 +1,13 @@
 Usage: vmig [options] command
 
 Options:
-  -c:file,      --config=file
-  -C:uri,       --connection=uri
-  -d:"db db2",  --databases="db db2"
-  -f,           --fail-on-down
-  -m:path,      --migrations-path=path
-  -M:db.tbl,    --migrations-table=db.tbl
-  -s:path,      --schemes-path=path
+  --config=file
+  --connection=uri
+  --databases="db db2"
+  --fail-on-down
+  --migrations-path=path
+  --migrations-table=db.tbl
+  --schemes-path=path
 
 Commands:
   d,diff [-r, --reverse]  Displays changes in DB scheme as SQL commands
