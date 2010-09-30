@@ -50,6 +50,51 @@ class Vmig
 		echo $status_text;
 	}
 
+	/*
+	 * Locate and fix renamed migrations
+	 *
+	 * Get migrations from DB and compare them by SHA1 with
+	 * those from files. If SHA1 is equal but name differs -
+	 * update DB record.
+	 *
+	 * @param &array $migrations_up   A reference to Migrations Up array to be cleaned
+	 * @param &array $migrations_down A reference to Migrations Down array to be cleaned
+	 * @return array $renamed_migrations Format: 'db_migration_name'=>'file_migration_name'
+	 */
+	private function _fix_renamed_migrations(&$migrations_up = array(), &$migrations_down = array())
+	{
+		$renamed_migrations = array();
+
+		// If a migration was renamed - locate it and update its filename
+		$db_migrations = $this->_get_migrations_from_db(false, true, '');
+		$file_migrations = $this->_get_migrations_from_files();
+		foreach($db_migrations as $db_migration_name => $db_migration)
+		{
+			foreach($file_migrations as $file_migration_name)
+			{
+				$file_sha1 = sha1_file($this->config->migrations_path . '/' . $file_migration_name);
+				if($db_migration['sha1'] == $file_sha1 && $db_migration_name != $file_migration_name)
+				{
+					$renamed_migrations[$db_migration_name] = $file_migration_name;
+				}
+			}
+		}
+
+		foreach($renamed_migrations as $db_name => $file_name)
+		{
+			$this->get_db()->query("UPDATE `{$this->config->migration_db}`.`{$this->config->migration_table}` SET name='{$file_name}' WHERE name='{$db_name}';");
+			if(key_exists($db_name, $migrations_down))
+			{
+				unset($migrations_down[$db_name]);
+			}
+			if(key_exists($file_name, $migrations_up))
+			{
+				unset($migrations_up[$file_name]);
+			}
+		}
+
+		return $renamed_migrations;
+	}
 
 	private function _get_migrations_for_status()
 	{
@@ -59,28 +104,14 @@ class Vmig
 		$not_applied_migrations = $this->_find_not_applied_migrations();
 
 		$migrations_down = array();
-		$migrations_down = array_merge($migrations_down, $unnecessary_migrations);
-		$migrations_down = array_merge($migrations_down, $to_changed_migration);
+		$migrations_down = array_merge($migrations_down, $unnecessary_migrations, $to_changed_migration);
 		ksort($migrations_down);
 		$migrations_down = array_reverse($migrations_down);
 
 		$migrations_up = array();
-		$migrations_up = array_merge($migrations_up, $to_changed_migration);
-		$migrations_up = array_merge($migrations_up, $down_and_up_migrations);
-		$migrations_up = array_merge($migrations_up, $not_applied_migrations);
+		$migrations_up = array_merge($migrations_up, $to_changed_migration, $down_and_up_migrations, $not_applied_migrations);
 		ksort($migrations_up);
-
-        // If a migration was renamed - locate it, delete from DB and approve from file
-        $renamed_migrations = array_intersect($migrations_down, $migrations_up);
-        foreach($renamed_migrations as $migration_name => $migration)
-        {
-            $name = $this->get_db()->escape($migration_name);
-			$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name='{$name}';");
-            unset($migrations_down[$migration_name]);
-
-            $this->_approve_migration(array_search($migration, $migrations_up), $migration);
-            unset($migrations_up[array_search($migration, $migrations_up)]);
-        }
+		$this->_fix_renamed_migrations($migrations_up, $migrations_down);
 
 		if(!count($migrations_up) && !count($migrations_down))
 			return '';
@@ -421,29 +452,41 @@ class Vmig
 	}
 
 
-	private function _get_migrations_from_db($desc = false, $with_sha1 = false, $name = '')
+	private function _get_migrations_from_db($desc = false, $with_sha1 = false, $name = '', $sha1 = '')
 	{
 		$addition = 'ASC';
 		if($desc)
+		{
 			$addition = 'DESC';
+		}
 
-		$condition = '1=1';
+		$condition = array();
 		if($name)
-			$condition = "name='" . $this->get_db()->escape($name) . "'";
+		{
+			$condition[] = "name='" . $this->get_db()->escape($name) . "'";
+		}
+		if($sha1)
+		{
+			$condition[] = "sha1='" . $this->get_db()->escape($sha1) . "'";
+		}
+
+		$condition = sizeof($condition) ? ' WHERE '.implode(' AND ', $condition) : '';
 
 		$this->_create_migration_table_if_necessary();
 
-		$r = $this->get_db()->query("SELECT `name`, `query`, `sha1` FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE {$condition} ORDER BY `name` " . $addition);
+		$r = $this->get_db()->query("SELECT `name`, `query`, `sha1` FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` {$condition} ORDER BY `name` " . $addition);
 		$db_migrations = array();
 		while($row = $r->fetch_assoc())
 		{
 			if(!$with_sha1)
 				$db_migrations[$row['name']] = $row['query'];
 			else
+			{
 				$db_migrations[$row['name']] = array(
 					'query' => $row['query'],
 					'sha1'  => $row['sha1'],
 				);
+			}
 		}
 		$r->close();
 
