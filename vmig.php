@@ -138,23 +138,23 @@ try
 
 		case 'reset':
 		case 'r':
-            $for_what = array();
-            foreach($args as $v)
-            {
-                @list($db, $table) = explode('.', $v);
-                if($db)
-                {
-                    if(!array_key_exists($db,$for_what))
-                    {
-                        $for_what[$db] = array();
-                    }
-                    if($table)
-                    {
-                        $for_what[$db][] = $table;
-                    }
-                }
-            }
-            $vmig->reset_db($for_what);
+			$for_what = array();
+			foreach($args as $v)
+			{
+				@list($db, $table) = explode('.', $v);
+				if($db)
+				{
+					if($table && (!array_key_exists($db, $for_what) || sizeof($for_what[$db]) > 0))
+					{
+						$for_what[$db][] = $table;
+					}
+					else
+					{
+						$for_what[$db] = array();
+					}
+				}
+			}
+			$vmig->reset_db($for_what);
 			break;
 
 		case 'approve':
