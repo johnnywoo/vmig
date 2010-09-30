@@ -22,8 +22,8 @@ try
 		'connection=',
 		'fail-on-down',
 	);
+	list($settings, $args) = args('h', $options);
 
-	list($settings, $args) = args('', $options);
 	if(empty($args))
 	{
 		$cmd = (isset($settings['h']) || isset($settings['help'])) ? 'help' : 'usage';
