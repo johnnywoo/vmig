@@ -66,7 +66,7 @@ class Vmig_Scheme
 				$scheme['tables'][$table_name]['fields'][$field_name] = $field_props;
 			}
 
-			if(preg_match('@\s+(PRIMARY|UNIQUE)? KEY\s?(?:`(.*)`)?\s?\((.*)\)@', $line, $matches))
+			if(preg_match('@\s+(PRIMARY|UNIQUE)? KEY\s?(?:`(.*?)`)?\s?\((.*)\)@', $line, $matches))
 			{
 				$index_name = 'PRIMARY';
 				if(!empty($matches[2]))

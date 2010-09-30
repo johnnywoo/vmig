@@ -131,7 +131,6 @@ class Vmig_SchemesDiff
 	private function _generate_status_text_for_alter_tables($db_action)
 	{
 		$status = '';
-
 		foreach($db_action as $table_change_name => $table_changes)
 		{
 			switch($table_change_name)
@@ -154,6 +153,12 @@ class Vmig_SchemesDiff
 				$_action = $action;
 				if($table_change_name == 'modify_field')
 					$_action = $action['new'] . ' -- was ' . $action['old'];
+
+				if($table_change_name == 'modify_key')
+				{
+					$action_name = 'KEY ' . $action_name;
+					$_action = '(' . $action['new']['fields'] . ') -- was (' . $action['old']['fields'] . ')';
+				}
 
 				if($table_change_name == 'add_key' || $table_change_name == 'drop_key')
 				{
@@ -542,8 +547,8 @@ class Vmig_SchemesDiff
 						$migration[] = $this->_m_drop_key($field_props, $table_name);
 						break;
 					case 'modify_key':
-						$migration[] = $this->_m_drop_key($field_props, $table_name);
-						$migration[] = $this->_m_add_key($field_props, $table_name);
+						$migration[] = $this->_m_drop_key($field_props['old'], $table_name);
+						$migration[] = $this->_m_add_key($field_props['new'], $table_name);
 						break;
 					case 'props':
 						$migration[] = $field_props;
