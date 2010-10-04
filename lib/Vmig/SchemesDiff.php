@@ -50,7 +50,7 @@ class Vmig_SchemesDiff
 					case 'add_keys':
 						$migration['add_foreign_keys'][] = $this->_m_add_foreign_key($db_action['index'], $db_action['table_name']);
 						break;
-					case 'drop_key':
+					case 'drop_keys':
 						$migration['drop_foreign_keys'][] = $this->_m_drop_foreign_key($db_action['index'], $db_action['table_name']);
 						break;
 					case 'modify_keys':
