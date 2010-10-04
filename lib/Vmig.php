@@ -289,14 +289,14 @@ class Vmig
 
 	function _create_migrations($up = true, $for_what = array())
 	{
-        if(!sizeof($for_what))
-        {
-            $databases = $this->config->databases;
-        }
-        else
-        {
-            $databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
-        }
+		if(!sizeof($for_what))
+		{
+			$databases = $this->config->databases;
+		}
+		else
+		{
+			$databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
+		}
 		$scheme_from = array();
 		$scheme_to = array();
 		$migrations = array(
@@ -322,14 +322,14 @@ class Vmig
 			if(!$up)
 				list($scheme_from, $scheme_to) = array($scheme_to, $scheme_from);
 
-            if(!array_key_exists($db, $for_what))
-            {
-                $tables = array();
-            }
-            else
-            {
-                $tables = $for_what[$db];
-            }
+			if(!array_key_exists($db, $for_what))
+			{
+				$tables = array();
+			}
+			else
+			{
+				$tables = $for_what[$db];
+			}
 			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db, $tables);
 			$migration = $diff->render_migration();
 
