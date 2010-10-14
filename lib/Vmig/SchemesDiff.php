@@ -526,6 +526,26 @@ class Vmig_SchemesDiff
 		{
 			if(!is_array($changes))
 				continue;
+			elseif($change_name == 'props')
+			{
+				/*
+				 * change 'props' applies to table, not to field. So it looks like:
+				 * 	array(
+				 * 		'old'=>'...',
+				 * 		'new'=>'...'
+				 * 	),
+				 *
+				 * rather then field change:
+				 * 	array(
+				 * 		'field_name' => array(
+				 * 			'old'=>'...',
+				 * 			'new'=>'...'
+				 * 		)
+				 * 	)
+				 */
+				$migration[] = $changes['new'];
+				continue;
+			}
 
 			foreach($changes as $field_name => $field_props)
 			{
@@ -550,8 +570,6 @@ class Vmig_SchemesDiff
 						$migration[] = $this->_m_drop_key($field_props['old'], $table_name);
 						$migration[] = $this->_m_add_key($field_props['new'], $table_name);
 						break;
-					case 'props':
-						$migration[] = $field_props;
 				}
 			}
 		}
