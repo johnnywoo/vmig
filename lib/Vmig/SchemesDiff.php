@@ -85,8 +85,7 @@ class Vmig_SchemesDiff
 			{
 				foreach($changes as $db_action_name => $db_action)
 				{
-					if(key_exists($db_action['table_name'], $diff_data['alter_tables']))
-						$diff_data['alter_tables'][$db_action['table_name']][$change_name.'_f'][$db_action_name] = $db_action;
+					$diff_data['alter_tables'][$db_action['table_name']][$change_name.'_f'][$db_action_name] = $db_action;
 				}
 			}
 		}
