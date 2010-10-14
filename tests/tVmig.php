@@ -116,7 +116,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field100` int(11) NOT NULL;");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field101` varchar(255) NOT NULL;");
-		$this->exec('create migrate_up');
+		$this->exec('create -A migrate_up');
 		$this->exec_reset();
 
 		try
