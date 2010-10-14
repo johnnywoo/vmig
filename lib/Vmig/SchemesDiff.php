@@ -596,7 +596,7 @@ class Vmig_SchemesDiff
 
 	private function _m_drop_view($view_name)
 	{
-		return "DROP VIEW `{$this->_db_name}`.`{$view_name}`\n";
+		return "DROP VIEW `{$this->_db_name}`.`{$view_name}`;\n";
 	}
 
 
