@@ -32,7 +32,28 @@ class Vmig_Dump
 			// removing view params
 			$sql = preg_replace('/^(CREATE )[^\n]*? (VIEW)/', '$1$2', $sql);
 
-			$dump .=  $sql.";\n";
+			//let's sort the CONSTRAINTs, if any.
+			$sql_array = explode("\n", $sql);
+			$constraints = array();
+			$constraints_pos = 0; // position of the last CONSTRAINT. After ksort, all CONSTRAINTs will be put there
+			foreach($sql_array as $string_num=>$sql_string)
+			{
+				if(preg_match("/\s+CONSTRAINT `([^\n`]*)`[^\n]*$/i", $sql_string, $res))
+				{
+					$constraints[$res[1]] = $sql_string;
+					$constraints_pos = $string_num;
+					unset($sql_array[$string_num]);
+				}
+			}
+
+			if($constraints_pos > 0)
+			{
+				ksort($constraints); // by symbol_name
+				$sql_array[$constraints_pos] = implode("\n", $constraints);
+				ksort($sql_array); // by string_num
+			}
+
+			$dump .=  implode("\n", $sql_array).";\n";
 		}
 
 		return new self($dump);
