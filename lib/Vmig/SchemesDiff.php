@@ -543,7 +543,8 @@ class Vmig_SchemesDiff
 				 * 		)
 				 * 	)
 				 */
-				$migration[] = $changes['new'];
+				if(array_key_exists('new', $changes)) // 'props' can be array(array 'old', array 'new'), or an empty array.
+					$migration[] = $changes['new'];
 				continue;
 			}
 
