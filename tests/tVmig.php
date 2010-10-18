@@ -17,17 +17,26 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 	private $migrations_script = '';
 
+	private $samples = array();
+
 	public function __construct($name = NULL, array $data = array(), $dataName = '')
 	{
 		parent::__construct($name, $data, $dataName);
 
 		$path = dirname(__FILE__);
+		$samples_path = $path.'/sample_migrations';
 		$this->config = Vmig_Config::find($path);
 
 		$this->db = new Vmig_MysqlConnection('');
 		$this->db->query('SELECT 1'); // will throw if unable to connect
 
 		$this->test_dbname = reset($this->config->databases);
+
+		//fill the samples array. If a required sample is missing, the according test will finish with an error (Undefined index)
+		foreach(glob($samples_path.'/*.sql') as $fname)
+		{
+			$this->samples[pathinfo($fname, PATHINFO_FILENAME)] = file_get_contents($fname);
+		}
 
 		$this->migrations_script = 'php '.dirname(dirname(__FILE__)).'/vmig.php --config='.escapeshellarg($path.'/'.Vmig_Config::DEFAULT_CONF_FILE);
 
@@ -76,10 +85,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('create create');
 		$migration = $this->get_last_migration_from_files();
 
-		$this->assertContains('ADD COLUMN `field100` int(11) NOT NULL', $migration);
-		$this->assertContains('ADD COLUMN `field101` varchar(255) NOT NULL', $migration);
-		$this->assertContains('DROP COLUMN `field100`', $migration);
-		$this->assertContains('DROP COLUMN `field101`', $migration);
+		$this->assertEquals($migration, $this->samples['create_approve_migrateUp']);
 	}
 
 
@@ -91,10 +97,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
 
-		$this->assertContains('ADD COLUMN `field100` int(11) NOT NULL', $migration);
-		$this->assertContains('ADD COLUMN `field101` varchar(255) NOT NULL', $migration);
-		$this->assertContains('DROP COLUMN `field100`', $migration);
-		$this->assertContains('DROP COLUMN `field101`', $migration);
+		$this->assertEquals($migration, $this->samples['create_approve_migrateUp']);
 	}
 
 
@@ -133,10 +136,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 		$this->exec('migrate');
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains('ADD COLUMN `field100` int(11) NOT NULL', $migration);
-		$this->assertContains('ADD COLUMN `field101` varchar(255) NOT NULL', $migration);
-		$this->assertContains('DROP COLUMN `field100`', $migration);
-		$this->assertContains('DROP COLUMN `field101`', $migration);
+		$this->assertEquals($migration, $this->samples['create_approve_migrateUp']);
 	}
 
 
@@ -183,7 +183,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('migrate');
 
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("CREATE TABLE `{$this->test_dbname}`.`test100` (", $migration);
+		$this->assertEquals($migration, $this->samples['createTableUp']);
 	}
 
 
@@ -207,7 +207,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('migrate');
 
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("ADD INDEX `field1` (`field1`)", $migration);
+		$this->assertEquals($migration, $this->samples['addIndexUp']);
 	}
 
 
@@ -249,7 +249,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('migrate');
 
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`)", $migration);
+		$this->assertEquals($migration, $this->samples['addForeignKeyUp']);
 	}
 
 
@@ -275,7 +275,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('migrate');
 
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("CREATE VIEW `{$this->test_dbname}`.`view1` AS (select `test1`.`id` AS `iid` from `test1`);", $migration);
+		$this->assertEquals($migration, $this->samples['addViewUp']);
 	}
 
 
@@ -286,7 +286,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('create pos34');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("MODIFY `field4` int(11) NOT NULL default '0' AFTER `field2`", $migration);
+		$this->assertEquals($migration, $this->samples['fieldsPos34']);
 	}
 
 
@@ -296,7 +296,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('create pos2after4');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("MODIFY `field2` varchar(255) NOT NULL default '' AFTER `field4`", $migration);
+		$this->assertEquals($migration, $this->samples['fieldsPos2after4']);
 	}
 
 
@@ -308,8 +308,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('create pos15');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("MODIFY `field1` int(11) NOT NULL default '0' AFTER `field4`", $migration);
-		$this->assertContains("MODIFY `field5` int(11) NOT NULL default '0' FIRST", $migration);
+		$this->assertEquals($migration, $this->samples['fieldsPos15']);
 	}
 
 
@@ -320,7 +319,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->exec('create pos4after_deleted');
 		$this->exec('approve');
 		$migration = $this->get_last_migration_from_base();
-		$this->assertContains("MODIFY `field5` int(11) NOT NULL default '0' AFTER `field1`", $migration);
+		$this->assertEquals($migration, $this->samples['fieldsPos4AfterDeleted']);
 	}
 
 
