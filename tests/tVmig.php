@@ -322,7 +322,26 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->assertEquals($migration, $this->samples['fieldsPos4AfterDeleted']);
 	}
 
+	function test_changeEngineDown()
+	{
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ENGINE=MyISAM;");
+		$this->exec('create engine_down');
+		$this->remove_migrations_files();
+		$this->exec('migrate');
 
+		$this->assertFalse($this->get_last_migration_from_base());
+	}
+
+	function test_changeEngineUp()
+	{
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ENGINE=MyISAM;");
+		$this->exec('create -A engine_up');
+		$this->exec_reset();
+		$this->exec('migrate');
+
+		$migration = $this->get_last_migration_from_base();
+		$this->assertEquals($migration, $this->samples['changeEngineUp']);
+	}
 	//
 	// TOOLS
 	//
