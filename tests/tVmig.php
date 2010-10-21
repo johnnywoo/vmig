@@ -189,7 +189,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 	function test_addIndexDown()
 	{
-		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field1` (`field1`);");
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field2` (`field2`(10));");
 		$this->exec('create index_down');
 		$this->exec('approve');
 		$this->remove_migrations_files();
@@ -201,7 +201,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 	function test_addIndexUp()
 	{
-		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field1` (`field1`);");
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD INDEX `field2` (`field2`(10));");
 		$this->exec('create index_up');
 		$this->exec_reset();
 		$this->exec('migrate');
