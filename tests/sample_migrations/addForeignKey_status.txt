@@ -1,0 +1,5 @@
+Database changes:
+ + vmig_test.test100
+
+ ~ vmig_test.test100
+    + FK_test FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE

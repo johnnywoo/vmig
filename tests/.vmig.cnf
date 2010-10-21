@@ -1,4 +1,5 @@
 schemes-path=scheme
 migrations-path=migrations
 migrations-table=migrations.test_migrations
+no-color=yes
 databases=vmig_test
