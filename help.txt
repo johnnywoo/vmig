@@ -31,6 +31,9 @@ Options:
     Table name for migration data. The table will be created if not exists;
     database must exist.
 
+  --no-color
+    No color in the output.
+
   --schemes-path=path
     Path to schemes folder.
 

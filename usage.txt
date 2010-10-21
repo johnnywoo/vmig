@@ -7,6 +7,7 @@ Options:
   --fail-on-down
   --migrations-path=path
   --migrations-table=db.tbl
+  --no-color
   --schemes-path=path
 
 Commands:

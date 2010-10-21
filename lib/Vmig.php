@@ -42,7 +42,7 @@ class Vmig
 
 		$status_text .= $this->_get_migrations_for_status();
 
-		if(class_exists('PEAR') && class_exists('Console_Color'))
+		if(class_exists('PEAR') && class_exists('Console_Color') && $this->config->no_color == false)
 			$status_text = Console_Color::convert($status_text);
 		else
 			$status_text = preg_replace('@%[ygrn]@', '', $status_text);

@@ -21,6 +21,7 @@ try
 		'migrations-table=',
 		'connection=',
 		'fail-on-down',
+		'no-color',
 	);
 	list($settings, $args) = args('h', $options);
 
