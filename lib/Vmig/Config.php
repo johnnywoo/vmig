@@ -79,7 +79,7 @@ class Vmig_Config
 	public $migration_table = '';
 	public $connection      = '';
 	public $fail_on_down    = '';
-	public $no_color    = '';
+	public $no_color        = false;
 
 	public $databases = array();
 
@@ -109,7 +109,7 @@ class Vmig_Config
 		$this->connection = isset($params['connection']) ? $params['connection'] : '';
 
 		$this->fail_on_down = isset($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no';
-		$this->no_color = isset($params['no-color']) && strtolower($params['no-color']) != 'no';
+		$this->no_color = isset($params['no-color']);
 	}
 
 	private static function absolutize_path($path, $cwd)

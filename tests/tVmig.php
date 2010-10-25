@@ -356,6 +356,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->assertFalse($this->get_last_migration_from_base());
 	}
 
+
 	function test_changeEngineUp()
 	{
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ENGINE=MyISAM;");
@@ -366,6 +367,20 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$migration = $this->get_last_migration_from_base();
 		$this->assertEquals($migration, $this->samples['changeEngineUp']);
 	}
+
+
+	function test_noColorFlag()
+	{
+		if(!class_exists('PEAR') || !class_exists('Console_Color'))
+		{
+			$this->markTestSkipped('Class Console_Color does not exist, noColor test skipped.');
+		}
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field200` int(11) NOT NULL;");
+		$status_colored = $this->exec('status');
+		$status_not_colored = $this->exec('--no-color status');
+		$this->assertNotEquals($status_colored, $status_not_colored);
+	}
+
 	//
 	// TOOLS
 	//
