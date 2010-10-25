@@ -18,7 +18,6 @@ class tVmig extends PHPUnit_Framework_TestCase
 	private $migrations_script = '';
 
 	private $samples = array();
-	private $statuses = array();
 
 	public function __construct($name = NULL, array $data = array(), $dataName = '')
 	{
@@ -224,7 +223,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
-		$status = $this->exec('status');
+		$status = $this->exec('--no-color status');
 		$this->assertEquals($status, $this->samples['addForeignKey_status']);
 
 		$this->exec('create fk_down');
@@ -248,7 +247,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 		");
 		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
-		$status = $this->exec('status');
+		$status = $this->exec('--no-color status');
 		$this->assertEquals($status, $this->samples['addForeignKey_status']);
 
 		$this->exec('create fk_up');
