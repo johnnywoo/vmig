@@ -253,6 +253,30 @@ class tVmig extends PHPUnit_Framework_TestCase
 	}
 
 
+	function test_sortForeignKeys()
+	{
+		$this->db->query("
+			CREATE TABLE `{$this->test_dbname}`.`test100` (
+				`id` int(11) NOT NULL auto_increment,
+				`field1` int(11) NOT NULL default '0',
+				`field2` int(11) NOT NULL default '0',
+				PRIMARY KEY  (`id`),
+				KEY `field1` (`field1`),
+				KEY `field2` (`field2`)
+			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+		");
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test1` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test100` ADD CONSTRAINT `FK_test2` FOREIGN KEY (`field2`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
+
+		$this->exec('create fk_sort');
+
+		$dump_file = "{$this->config->schemes_path}/{$this->test_dbname}.scheme.sql";
+		$dump = file_exists($dump_file) ? file_get_contents($dump_file) : '';
+
+		$this->assertEquals($dump, $this->samples['sortForeignKeys_dump']);
+	}
+
+
 	function test_addViewDown()
 	{
 		$this->db->query("CREATE VIEW `{$this->test_dbname}`.`view1` AS (SELECT id AS iid FROM `{$this->test_dbname}`.`test1`);");
