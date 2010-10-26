@@ -45,7 +45,7 @@ class Vmig
 		if(!$this->config->no_color && class_exists('PEAR') && class_exists('Console_Color'))
 			$status_text = Console_Color::convert($status_text);
 		else
-			$status_text = preg_replace('@%[ygrn]@', '', $status_text);
+			$status_text = preg_replace('@%[ygrnm]@', '', $status_text);
 
 		echo $status_text;
 	}
@@ -55,33 +55,39 @@ class Vmig
 	 *
 	 * @param &array $migrations_up   A reference to Migrations Up array
 	 * @param &array $migrations_down A reference to Migrations Down array
-	 * @param bool $cleanup Do we need to remove renamed mig-s from both of the arrays
 	 * @return array $renamed_migrations Format: 'db_migration_name'=>'file_migration_name'
 	 */
-	private function _locate_renamed_migrations(&$migrations_down, &$migrations_up, $cleanup = false)
+	private function _locate_renamed_migrations(&$migrations_down, &$migrations_up)
 	{
 		$renamed_migrations = array();
 
-		$count = -1;
-		foreach(array_reverse($migrations_down) as $name=>$migration_down) // we need to reverse to get the right order "3..2..1..1..2..3";
+		$count = 0;
+		foreach(array_reverse($migrations_down) as $name => $migration_down) // we need to reverse to get the right order "3..2..1..1..2..3";
 		{
 			$up_equiv = each($migrations_up);
-			if($up_equiv == false)
+			if($up_equiv == false) // if there are no appropriate migrations from files
 			{
 				break;
 			}
-			if($name != $up_equiv['key'] && sha1($migration_down) == sha1($up_equiv['value']))
+
+			if(sha1($migration_down) != sha1($up_equiv['value'])) // if content differs
+			{
+				break;
+			}
+			elseif($name != $up_equiv['key']) // if content is equal, but name differs
 			{
 				$renamed_migrations[$name] = $up_equiv['key'];
-				if($cleanup)
-				{
-					unset($migrations_down[$name]);
-					unset($migrations_up[$up_equiv['key']]);
-				}
+
+				unset($migrations_down[$name]);
+				unset($migrations_up[$up_equiv['key']]);
 			}
-			$count++;
+			else
+			{
+				$count++; // count of equal migrations, that will be unset because nothing is changed before them - just renamed
+			}
 		}
-		if($cleanup && array_slice($migrations_up, 0, $count) === array_slice(array_reverse($migrations_down), 0, $count)) // remove the identical parts from up and down
+
+		if(array_slice($migrations_up, 0, $count) === array_slice(array_reverse($migrations_down), 0, $count)) // remove the identical parts from up and down
 		{
 			$migrations_down = array_slice($migrations_down, 0, count($migrations_down) - $count);
 			$migrations_up = array_slice($migrations_up, $count);
@@ -93,20 +99,20 @@ class Vmig
 	private function _get_migrations_for_status()
 	{
 		$unnecessary_migrations = $this->_find_old_unnecessary_migrations();
-		$to_changed_migration = $this->_find_migrations_from_last_to_first_changed();
+		list($to_changed_db_migrations, $to_changed_file_migrations) = $this->_find_migrations_from_last_to_first_changed();
 		$down_and_up_migrations = $this->_find_down_and_up_migrations();
 		$not_applied_migrations = $this->_find_not_applied_migrations();
 
 		$migrations_down = array();
-		$migrations_down = array_merge($migrations_down, $unnecessary_migrations, $to_changed_migration);
+		$migrations_down = array_merge($migrations_down, $unnecessary_migrations, $to_changed_db_migrations);
 		ksort($migrations_down);
 		$migrations_down = array_reverse($migrations_down);
 
 		$migrations_up = array();
-		$migrations_up = array_merge($migrations_up, $to_changed_migration, $down_and_up_migrations, $not_applied_migrations);
+		$migrations_up = array_merge($migrations_up, $to_changed_file_migrations, $down_and_up_migrations, $not_applied_migrations);
 		ksort($migrations_up);
 
-		$renamed_migrations = $this->_locate_renamed_migrations($migrations_down, $migrations_up, true);
+		$renamed_migrations = $this->_locate_renamed_migrations($migrations_down, $migrations_up);
 
 		if(!count($migrations_up) && !count($migrations_down) && !count($renamed_migrations))
 			return '';
@@ -122,7 +128,10 @@ class Vmig
 			}
 		}
 
-		$status .= "\nMigrations to be applied:\n";
+		if(count($migrations_down) || count($migrations_up))
+		{
+			$status .= "\nMigrations to be applied:\n";
+		}
 		foreach($migrations_down as $migration_name => $migration)
 		{
 			$color = '%r';
@@ -261,20 +270,20 @@ class Vmig
 		$this->_create_migration_table_if_necessary();
 
 		$unnecessary_migrations = $this->_find_old_unnecessary_migrations();
-		$to_changed_migration = $this->_find_migrations_from_last_to_first_changed();
+		list($to_changed_db_migrations, $to_changed_file_migrations) = $this->_find_migrations_from_last_to_first_changed();
 		$down_and_up_migrations = $this->_find_down_and_up_migrations();
 		$not_applied_migrations = $this->_find_not_applied_migrations();
 
 		$migrations_down = array();
-		$migrations_down = array_merge($migrations_down, $unnecessary_migrations, $to_changed_migration);
+		$migrations_down = array_merge($migrations_down, $unnecessary_migrations, $to_changed_db_migrations);
 		ksort($migrations_down);
 		$migrations_down = array_reverse($migrations_down);
 
 		$migrations_up = array();
-		$migrations_up = array_merge($migrations_up, $to_changed_migration, $down_and_up_migrations, $not_applied_migrations);
+		$migrations_up = array_merge($migrations_up, $to_changed_file_migrations, $down_and_up_migrations, $not_applied_migrations);
 		ksort($migrations_up);
 
-		$renamed_migrations = $this->_locate_renamed_migrations($migrations_down, $migrations_up, true);
+		$renamed_migrations = $this->_locate_renamed_migrations($migrations_down, $migrations_up);
 
 		if(count($renamed_migrations))
 			$this->_rename_migrations($renamed_migrations);
@@ -555,7 +564,7 @@ class Vmig
 		if(!$first_migration)
 			return array();
 
-		$migrations = $this->_find_migrations_from_last_to_specified($first_migration);
+		$migrations = $this->_find_migrations_from_last_to_specified_from_db($first_migration);
 
 		return $migrations;
 	}
@@ -567,7 +576,7 @@ class Vmig
 		if(!$first_migration)
 			return array();
 
-		$migrations = $this->_find_migrations_from_last_to_specified($first_migration);
+		$migrations = $this->_find_migrations_from_last_to_specified_from_db($first_migration);
 		$migrations = array_reverse($migrations);
 
 		$files_migrations = $this->_get_migrations_from_files();
@@ -624,22 +633,39 @@ class Vmig
 	{
 		$changed_migrations = $this->_find_changed_migrations();
 		if(!count($changed_migrations))
-			return array();
+			return array(array(), array());
 
 		$migration_names = array_keys($changed_migrations);
 		$first_changed_migration = array_shift($migration_names);
-		$migrations = $this->_find_migrations_from_last_to_specified($first_changed_migration);
-		return $migrations;
+		$db_migrations = $this->_find_migrations_from_last_to_specified_from_db($first_changed_migration);
+		$file_migrations = $this->_find_migrations_from_last_to_specified_from_files($first_changed_migration);
+		return array($db_migrations, $file_migrations);
 	}
 
 
-	private function _find_migrations_from_last_to_specified($migration_name)
+	private function _find_migrations_from_last_to_specified_from_db($migration_name)
 	{
 		$db_migrations = $this->_get_migrations_from_db(true);
 		$migrations = array();
 		foreach($db_migrations as $name => $migration)
 		{
 			$migrations[$name] = $migration;
+
+			if($name == $migration_name)
+				break;
+		}
+
+		return $migrations;
+	}
+
+
+	private function _find_migrations_from_last_to_specified_from_files($migration_name)
+	{
+		$file_migrations = $this->_get_migrations_from_files();
+		$migrations = array();
+		foreach(array_reverse($file_migrations) as $name)
+		{
+			$migrations[$name] = file_get_contents($this->config->migrations_path . '/' . $name);
 
 			if($name == $migration_name)
 				break;
@@ -711,7 +737,7 @@ class Vmig
 			$old_name      = $db->escape($old_name);
 			$new_name      = $db->escape($new_name);
 
-			$msg = " Renaming: %m{$old_name} -> {$new_name}%n\n";
+			$msg = "\n--rename: {$old_name} -> {$new_name}\n\n";
 			if(class_exists('PEAR') && class_exists('Console_Color'))
 				$msg = Console_Color::convert($msg);
 			else
