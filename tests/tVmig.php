@@ -387,6 +387,67 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->assertNotEquals($status_colored, $status_not_colored);
 	}
 
+
+	function test_locateRenamed()
+	{
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field301` int(1) NOT NULL;");
+		$this->exec('create create_301');
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field302` int(1) NOT NULL;");
+		$this->exec('create create_302');
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field303` int(1) NOT NULL;");
+		$this->exec('create create_303');
+		$this->db->query("ALTER TABLE `{$this->test_dbname}`.`test1` ADD COLUMN `field304` int(1) NOT NULL;");
+		$this->exec('create create_304');
+
+		$files = glob($this->config->migrations_path.'/*');
+		$migrations = array();
+
+		$i = 0; //let's rename them to 0001..0004
+		foreach($files as $file)
+		{
+			$i++;
+			$new_name = sprintf('%04d', $i).substr(pathinfo($file, PATHINFO_BASENAME),10);
+			rename($file, $this->config->migrations_path . '/' . $new_name);
+			$migrations[] = $new_name;
+		}
+		$this->exec('migrate');
+
+
+		rename($this->config->migrations_path . '/0002_create_302.sql', $this->config->migrations_path . '/0002_create_302_renamed1.sql'); //rename second migration
+
+		$status = $this->exec('--no-color status'); //only rename - no changed migrations
+		$this->assertEquals($status, $this->samples['locateRenamed_status1']);
+
+		$migrate_out = $this->exec('migrate');
+		$this->assertEquals($migrate_out, $this->samples['locateRenamed_migrate1']);
+
+
+		rename($this->config->migrations_path . '/0002_create_302_renamed1.sql', $this->config->migrations_path . '/0002_create_302_renamed2.sql'); //rename it back (it becomes renamed again)
+
+		$fh = fopen($this->config->migrations_path . '/0003_create_303.sql', 'a'); //change a migration AFTER renamed one.
+		fwrite($fh, ' ');
+		fclose($fh);
+
+		$status = $this->exec('--no-color status');
+		$this->assertEquals($status, $this->samples['locateRenamed_status2']);
+
+		$migrate_out = $this->exec('migrate');
+		$this->assertEquals($migrate_out, $this->samples['locateRenamed_migrate2']);
+
+
+		rename($this->config->migrations_path . '/0002_create_302_renamed2.sql', $this->config->migrations_path . '/0002_create_302_renamed3.sql'); //...and again :)
+
+		$fh = fopen($this->config->migrations_path . '/0001_create_301.sql', 'a'); //change a migration BEFORE renamed one. (now it wouldn't act as renamed, because of possible dependencies. So it will be down-up'ed)
+		fwrite($fh, ' ');
+		fclose($fh);
+
+		$status = $this->exec('--no-color status');
+		$this->assertEquals($status, $this->samples['locateRenamed_status3']);
+
+		$migrate_out = $this->exec('migrate');
+		$this->assertEquals($migrate_out, $this->samples['locateRenamed_migrate3']);
+	}
+
 	//
 	// TOOLS
 	//
