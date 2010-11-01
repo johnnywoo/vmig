@@ -424,9 +424,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 		rename($this->config->migrations_path . '/0002_create_302_renamed1.sql', $this->config->migrations_path . '/0002_create_302_renamed2.sql'); //rename it back (it becomes renamed again)
 
-		$fh = fopen($this->config->migrations_path . '/0003_create_303.sql', 'a'); //change a migration AFTER renamed one.
-		fwrite($fh, ' ');
-		fclose($fh);
+		file_put_contents($this->config->migrations_path . '/0003_create_303.sql', ' ', FILE_APPEND); //change a migration AFTER renamed one.
 
 		$status = $this->exec('--no-color status');
 		$this->assertEquals($status, $this->samples['locateRenamed_status2']);
@@ -437,9 +435,7 @@ class tVmig extends PHPUnit_Framework_TestCase
 
 		rename($this->config->migrations_path . '/0002_create_302_renamed2.sql', $this->config->migrations_path . '/0002_create_302_renamed3.sql'); //...and again :)
 
-		$fh = fopen($this->config->migrations_path . '/0001_create_301.sql', 'a'); //change a migration BEFORE renamed one. (now it wouldn't act as renamed, because of possible dependencies. So it will be down-up'ed)
-		fwrite($fh, ' ');
-		fclose($fh);
+		file_put_contents($this->config->migrations_path . '/0001_create_301.sql', ' ', FILE_APPEND); //change a migration BEFORE renamed one. (now it wouldn't act as renamed, because of possible dependencies. So it will be down-up'ed)
 
 		$status = $this->exec('--no-color status');
 		$this->assertEquals($status, $this->samples['locateRenamed_status3']);

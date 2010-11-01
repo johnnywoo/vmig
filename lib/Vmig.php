@@ -228,8 +228,8 @@ class Vmig
 
 	public function apply_one_migration($name, $direction, $source)
 	{
-		$file_migration = $this->_get_migrations_from_files(false, true, $name);
-		$db_migration   = $this->_get_migrations_from_db(false, true, $name);
+		$file_migration = $this->_get_migrations_from_files($name);
+		$db_migration   = $this->_get_migrations_from_db($name);
 
 		if(empty($source))
 		{
@@ -387,7 +387,7 @@ class Vmig
 		}
 	}
 
-	private function _get_migrations_from_files($desc = false, $with_sha1 = false, $name = '')
+	private function _get_migrations_from_files($name = '')
 	{
 		$path = $this->config->migrations_path;
 		if(!file_exists($path) || !is_dir($path))
@@ -402,35 +402,21 @@ class Vmig
 			{
 				$migration_query = file_get_contents($file);
 				$fname = pathinfo($file, PATHINFO_BASENAME);
-				if(!$with_sha1)
-				{
-					$file_migrations[$fname] = $migration_query;
-				}
-				else
-				{
-					$file_migrations[$fname] = array(
-						'query' => $migration_query,
-						'sha1'  => sha1($migration_query),
-					);
-				}
+				$file_migrations[$fname] = array(
+					'query' => $migration_query,
+					'sha1'  => sha1($migration_query),
+				);
 			}
 		}
 
-		if($desc)
-		{
-			$file_migrations = array_reverse($file_migrations);
-		}
+		$file_migrations = array_reverse($file_migrations);
 		return $file_migrations;
 	}
 
 
-	private function _get_migrations_from_db($desc = false, $with_sha1 = false, $name = '')
+	private function _get_migrations_from_db($name = '')
 	{
 		$addition = 'ASC';
-		if($desc)
-		{
-			$addition = 'DESC';
-		}
 
 		$condition = array();
 		if($name)
@@ -446,15 +432,10 @@ class Vmig
 		$db_migrations = array();
 		while($row = $r->fetch_assoc())
 		{
-			if(!$with_sha1)
-				$db_migrations[$row['name']] = $row['query'];
-			else
-			{
-				$db_migrations[$row['name']] = array(
-					'query' => $row['query'],
-					'sha1'  => $row['sha1'],
-				);
-			}
+			$db_migrations[$row['name']] = array(
+				'query' => $row['query'],
+				'sha1'  => $row['sha1'],
+			);
 		}
 		$r->close();
 
@@ -487,7 +468,6 @@ class Vmig
 	{
 		$renamed_migrations = array();
 
-		$count = 0;
 		foreach(array_reverse($migrations_down) as $name_down => $migration_down) // we need to reverse to get the right order: "down1..down2..down3" is compared with "up1..up2..up3";
 		{
 			if(!list($name_up, $migration_up) = each($migrations_up)) // if there are no appropriate migrations from files
@@ -500,21 +480,9 @@ class Vmig
 			elseif($name_down != $name_up) // if content is equal, but name differs
 			{
 				$renamed_migrations[$name_down] = $name_up;
-
-				unset($migrations_down[$name_down], $migrations_up[$name_up]);
 			}
-			else
-			{
-				$count++; // count of equal migrations, that will be unset because nothing is changed before them - just renamed
-			}
+			unset($migrations_down[$name_down], $migrations_up[$name_up]);
 		}
-
-		if(array_slice($migrations_up, 0, $count) === array_slice(array_reverse($migrations_down), 0, $count)) // remove equal parts from up and down
-		{
-			$migrations_down = array_slice($migrations_down, 0, count($migrations_down) - $count);
-			$migrations_up = array_slice($migrations_up, $count);
-		}
-
 		return $renamed_migrations;
 	}
 
@@ -526,8 +494,8 @@ class Vmig
 	 */
 	private function _find_migrations()
 	{
-		$db_migrations = $this->_get_migrations_from_db(false, true);
-		$file_migrations = $this->_get_migrations_from_files(false, true);
+		$db_migrations = $this->_get_migrations_from_db();
+		$file_migrations = $this->_get_migrations_from_files();
 
 		foreach($db_migrations as $db_mig_name => $db_migration)
 		{
@@ -663,7 +631,7 @@ class Vmig
 			$old_name      = $db->escape($old_name);
 			$new_name      = $db->escape($new_name);
 
-			echo "\n--rename: {$old_name} -> {$new_name}\n\n";
+			echo "\n-- rename: {$old_name} -> {$new_name}\n\n";
 
 			$db->query("UPDATE `{$this->config->migration_db}`.`{$this->config->migration_table}` SET `name`='{$new_name}' WHERE `name`='{$old_name}'");
 		}
