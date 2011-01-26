@@ -149,7 +149,11 @@ class Vmig_SchemesDiff
 			}
 			foreach($table_changes as $action_name => $action)
 			{
-				$_action = $action;
+				$_action = null;
+
+				if($table_change_name == 'props')
+					$_action = $action;
+
 				if($table_change_name == 'modify_field')
 					$_action = $action['new'] . ' -- was ' . $action['old'];
 
@@ -173,11 +177,25 @@ class Vmig_SchemesDiff
 					$_action = $action['index']['props'];
 				}
 
-				$status .= "    {$act} {$action_name}%n {$_action}\n";
+				if($table_change_name == 'modify_keys_f')
+				{
+					$action_name = 'KEY ' . $action_name;
+					$_action = '(' . $action['new']['props'] . ') -- was (' . $action['old']['props'] . ')';
+				}
+
+				if(is_null($_action))
+					throw new Vmig_Error('Unknown change type "'.$table_change_name.'"');
+
+				$status .= $this->fix_carriage_returns("    {$act} {$action_name}%n {$_action}\n");
 			}
 		}
 
 		return $status;
+	}
+
+	private function fix_carriage_returns($text)
+	{
+		return str_replace("\r", '%r\\r%n', $text);
 	}
 
 
