@@ -151,7 +151,7 @@ class Vmig_SchemesDiff
 			{
 				$_action = null;
 
-				if($table_change_name == 'props')
+				if(is_string($action))
 					$_action = $action;
 
 				if($table_change_name == 'modify_field')
