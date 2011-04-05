@@ -1,7 +1,6 @@
 
 -- rename: 0002_create_302_renamed1.sql -> 0002_create_302_renamed2.sql
 
-done.
 
 -- down: 0004_create_304.sql
 

@@ -199,7 +199,6 @@ class Vmig
 
 		$this->_create_new_dumps();
 
-		echo "  done\n";
 		return true;
 	}
 
@@ -606,9 +605,9 @@ class Vmig
 	{
 		$db = $this->get_db();
 
-		$name      = $db->escape($name);
-		$query     = $db->escape($migration['query']);
-		$sha1      = $db->escape($migration['sha1']);
+		$name  = $db->escape($name);
+		$query = $db->escape($migration['query']);
+		$sha1  = $db->escape($migration['sha1']);
 
 		$db->query("
 			INSERT INTO `{$this->config->migration_db}`.`{$this->config->migration_table}` (name, query, sha1)
@@ -628,16 +627,12 @@ class Vmig
 
 		foreach($renamed_migrations as $old_name => $new_name)
 		{
-			$old_name      = $db->escape($old_name);
-			$new_name      = $db->escape($new_name);
-
 			echo "\n-- rename: {$old_name} -> {$new_name}\n\n";
 
-			$db->query("UPDATE `{$this->config->migration_db}`.`{$this->config->migration_table}` SET `name`='{$new_name}' WHERE `name`='{$old_name}'");
-		}
+			$old_name = $db->escape($old_name);
+			$new_name = $db->escape($new_name);
 
-		if(count($renamed_migrations)) {
-			echo "done.\n";
+			$db->query("UPDATE `{$this->config->migration_db}`.`{$this->config->migration_table}` SET `name` = '{$new_name}' WHERE `name` = '{$old_name}'");
 		}
 	}
 }
