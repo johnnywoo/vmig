@@ -160,7 +160,8 @@ try
 
 		case 'approve':
 		case 'a':
-			$vmig->approve_migration();
+			list($settings, $args) = args('', array(), $args);
+			$vmig->approve_migration($args);
 			break;
 
 		case 'migrate':
@@ -175,13 +176,29 @@ try
 
 		case 'up':
 		case 'down':
-			list($settings, $args) = args('fd', array('from-file', 'from-db'), $args);
+			list($settings, $args) = args('fdn', array('from-file', 'from-db', 'no-execute'), $args);
 
 			$is_from_file = isset($settings['from-file']) || isset($settings['f']);
 			$is_from_db = isset($settings['from-db']) || isset($settings['d']);
 
 			if(!count($args))
 				throw new Vmig_Error('Migration name is not specified');
+
+			if(isset($settings['no-execute']) || isset($settings['n']))
+			{
+				if($command == 'down')
+				{
+					foreach($args as $file_name)
+					{
+						$vmig->disprove_migration($file_name);
+					}
+				}
+				else
+				{
+					$vmig->approve_migration($args);
+				}
+				break;
+			}
 
 			if($is_from_file && $is_from_db)
 				throw new Vmig_Error('Options --from-file and --from-db cannot be used at the same time');

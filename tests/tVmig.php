@@ -100,6 +100,24 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->assertEquals($migration, $this->samples['create_approve_migrateUp']);
 	}
 
+	function test_approveSelectedMigrations()
+	{
+		// status = 0
+		$this->assertEquals(false, $this->get_last_migration_from_base());
+
+		// create 2 migrations with bad sql
+		file_put_contents($this->config->migrations_path . '/a.sql', 'invalid sql');
+		file_put_contents($this->config->migrations_path . '/b.sql', 'invalid sql 2');
+
+		// approve one
+		$this->exec('approve a.sql');
+		$this->assertEquals('invalid sql', $this->get_last_migration_from_base());
+
+		// approve all
+		$this->exec('approve');
+		$this->assertEquals('invalid sql 2', $this->get_last_migration_from_base());
+	}
+
 
 	function test_reset()
 	{
@@ -139,6 +157,17 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->assertEquals($migration, $this->samples['create_approve_migrateUp']);
 	}
 
+	function test_migrateUpNoExec()
+	{
+		file_put_contents($this->config->migrations_path.'/a.sql', $this->samples['insertRow']);
+
+		$this->exec('up -n a.sql');
+
+		$res = $this->db->query("SELECT count(*) as n FROM `{$this->test_dbname}`.`test1`");
+		$row = $res->fetch_assoc();
+		$this->assertEquals(0, $row['n']);
+		$this->assertEquals($this->samples['insertRow'], $this->get_last_migration_from_base());
+	}
 
 	function test_migrateDown()
 	{
@@ -149,6 +178,23 @@ class tVmig extends PHPUnit_Framework_TestCase
 		$this->remove_migrations_files();
 		$this->exec('migrate');
 
+		$this->assertFalse($this->get_last_migration_from_base());
+	}
+
+	function test_migrateDownNoExec()
+	{
+		file_put_contents($this->config->migrations_path.'/a.sql', $this->samples['insertRow']);
+		$this->exec('migrate');
+
+		$res = $this->db->query("SELECT count(*) as n FROM `{$this->test_dbname}`.`test1`");
+		$row = $res->fetch_assoc();
+		$this->assertEquals(1, $row['n']);
+
+		$this->exec('down -n a.sql');
+
+		$res = $this->db->query("SELECT count(*) as n FROM `{$this->test_dbname}`.`test1`");
+		$row = $res->fetch_assoc();
+		$this->assertEquals(1, $row['n']);
 		$this->assertFalse($this->get_last_migration_from_base());
 	}
 

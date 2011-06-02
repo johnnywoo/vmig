@@ -21,8 +21,9 @@ Commands:
                       Reverts DB scheme to that from scheme dump files.
                       If one or more DBs/tables given, vmig will reset
                       only them.
-  a,approve           Marks all migrations as applied, updates dump files
-  up   [-f, --from-file | -d, --from-db] filename
-  down [-f, --from-file | -d, --from-db] filename
+  a,approve [filename ...]
+                      Marks migrations as applied, updates dump files (if no files given)
+  up   [-f, --from-file | -d, --from-db] [-n, --no-execute] filename
+  down [-f, --from-file | -d, --from-db] [-n, --no-execute] filename
   help                Description of each command and its options
   init                Creates .vmig.cnf in current directory

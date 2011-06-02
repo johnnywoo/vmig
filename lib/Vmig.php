@@ -166,18 +166,29 @@ class Vmig
 	}
 
 
-	function approve_migration()
+	function approve_migration(array $filenames = array())
 	{
 		$this->_create_migration_table_if_necessary();
 
-		$migrations = $this->_find_migrations_classified();
-		foreach($migrations['old_unnecessary'] as $name => $migration)
+		if(empty($filenames))
 		{
-			$name = $this->get_db()->escape($name);
-			$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name='{$name}';");
-		}
+			$migrations = $this->_find_migrations_classified();
+			foreach($migrations['old_unnecessary'] as $name => $migration)
+			{
+				$name = $this->get_db()->escape($name);
+				$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name='{$name}';");
+			}
 
-		$to_approve = array_merge($migrations['not_applied'], $migrations['changed']);
+			$to_approve = array_merge($migrations['not_applied'], $migrations['changed']);
+		}
+		else
+		{
+			$to_approve = array();
+			foreach($filenames as $file_name)
+			{
+				$to_approve += $this->_get_migrations_from_files($file_name);
+			}
+		}
 
 		$values = array();
 		foreach($to_approve as $file_name => $migration)
@@ -197,7 +208,8 @@ class Vmig
 			");
 		}
 
-		$this->_create_new_dumps();
+		if(empty($filenames))
+			$this->_create_new_dumps();
 
 		return true;
 	}
@@ -581,8 +593,7 @@ class Vmig
 				throw new Vmig_Error('Down migrations are forbidden by fail-on-down configuration option');
 
 			$this->_apply_migration($down_migration);
-			$name = $this->get_db()->escape($name);
-			$this->get_db()->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name = '{$name}'");
+			$this->disprove_migration($name);
 		}
 	}
 
@@ -614,6 +625,14 @@ class Vmig
 			VALUES ('{$name}', '{$query}', '{$sha1}')
 			ON DUPLICATE KEY UPDATE query = VALUES(query), sha1 = VALUES(sha1)
 		");
+	}
+
+	public function disprove_migration($name)
+	{
+		$db = $this->get_db();
+
+		$name = $db->escape($name);
+		$db->query("DELETE FROM `{$this->config->migration_db}`.`{$this->config->migration_table}` WHERE name = '{$name}'");
 	}
 
 	/**

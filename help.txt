@@ -73,18 +73,20 @@ Commands:
     Alters database to structure from dump.
     You can tell vmig what to reset by setting db1, db2 etc.
 
-  approve
-    Marks all existing migrations as applied without actually running them.
-    Also dumps database schemes.
+  approve [filename ...]
+    Marks migrations as applied without actually running them.
+    If filenames are not given, all existing migrations will be marked.
+    In this case database schemes will be dumped.
 
-  up   [-f, --from-file | -d, --from-db] filename [filename ...]
-  down [-f, --from-file | -d, --from-db] filename [filename ...]
+  up   [-f, --from-file | -d, --from-db] [-n, --no-execute] filename [filename ...]
+  down [-f, --from-file | -d, --from-db] [-n, --no-execute] filename [filename ...]
     Apply or rollback one migration. If migration with given filename exists
     both in db and file, you need to specify source with one of parameters;
     otherwise parameter is optional.
     Options:
       --from-file   Use migration from filesystem.
       --from-db     Use migration from database.
+      --no-execute  Do not execute any SQL, only manage approved status
 
   help
     This message.
