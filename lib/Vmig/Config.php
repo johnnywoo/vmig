@@ -80,6 +80,7 @@ class Vmig_Config
 	public $connection      = '';
 	public $fail_on_down    = '';
 	public $no_color        = false;
+	public $charset         = '';
 
 	public $databases = array();
 
@@ -107,6 +108,8 @@ class Vmig_Config
 		// mysql driver will try to find the connection in .my.cnf
 		// so this is not a required parameter
 		$this->connection = isset($params['connection']) ? $params['connection'] : '';
+
+		$this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
 
 		$this->fail_on_down = isset($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no';
 		$this->no_color = isset($params['no-color']);

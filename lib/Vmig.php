@@ -277,7 +277,7 @@ class Vmig
 	{
 		if(!$this->db)
 		{
-			$this->db = new Vmig_MysqlConnection($this->config->connection);
+			$this->db = new Vmig_MysqlConnection($this->config->connection, $this->config->charset);
 		}
 		return $this->db;
 	}

@@ -8,6 +8,7 @@ class Vmig_MysqlConnection
 	public $port     = '';
 	public $user     = '';
 	public $password = '';
+	public $charset  = '';
 
 	/**
 	 * @var mysqli
@@ -17,7 +18,7 @@ class Vmig_MysqlConnection
 	/**
 	 * @param string $dsn mysql://user:pass@host:port
 	 */
-	public function __construct($dsn)
+	public function __construct($dsn, $charset = 'cp1251')
 	{
 		$p = parse_url($dsn);
 		if(isset($p['scheme']) && strtolower($p['scheme']) == 'mysql')
@@ -27,6 +28,7 @@ class Vmig_MysqlConnection
 			$this->user     = (string) @$p['user'];
 			$this->password = (string) @$p['pass'];
 		}
+		$this->charset = $charset;
 
 		$this->_load_connection_defaults();
 	}
@@ -125,7 +127,8 @@ class Vmig_MysqlConnection
 			if(mysqli_connect_error())
 				throw new Vmig_Error('Connect Error ' . mysqli_connect_error());
 
-			$this->query('SET NAMES cp1251');
+			$charset = $this->_connection->real_escape_string($this->charset);
+			$this->query("SET NAMES {$charset}");
 		}
 	}
 
