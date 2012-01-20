@@ -100,9 +100,7 @@ class Vmig_Scheme
 			}
 
 			if(preg_match('@(ENGINE=.+);@', $line, $matches))
-			{
 				$scheme['tables'][$table_name]['props'] = $matches[1];
-			}
 		}
 
 		$this->_scheme_data = $scheme;

@@ -276,9 +276,8 @@ class Vmig
 	private function get_db()
 	{
 		if(!$this->db)
-		{
 			$this->db = new Vmig_MysqlConnection($this->config->connection, $this->config->charset);
-		}
+
 		return $this->db;
 	}
 
@@ -297,15 +296,10 @@ class Vmig
 	function _create_migrations($up = true, $for_what = array())
 	{
 		if(!sizeof($for_what))
-		{
 			$databases = $this->config->databases;
-		}
 		else
-		{
 			$databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
-		}
-		$scheme_from = array();
-		$scheme_to = array();
+
 		$migrations = array(
 			'add_foreign_keys'  => array(),
 			'drop_foreign_keys' => array(),
@@ -330,13 +324,10 @@ class Vmig
 				list($scheme_from, $scheme_to) = array($scheme_to, $scheme_from);
 
 			if(!array_key_exists($db, $for_what))
-			{
 				$tables = array();
-			}
 			else
-			{
 				$tables = $for_what[$db];
-			}
+
 			$diff = new Vmig_SchemesDiff($scheme_from, $scheme_to, $db, $tables);
 			$migration = $diff->render_migration();
 
@@ -358,7 +349,7 @@ class Vmig
 
 
 	/**
-	 * @param string $url MySQL DSN
+	 * @param string $dbname
 	 * @param string $dump_file if a file is given, the dump is written into it; otherwise it is returned
 	 * @return string
 	 */
@@ -392,9 +383,7 @@ class Vmig
 		{
 			// ignore empty query error
 			if($e->getCode() != Vmig_MysqlError::ER_EMPTY_QUERY)
-			{
-				throw $e;
-			}
+				throw new Exception($e->getMessage(), $e->getCode(), $e);
 		}
 	}
 
@@ -431,9 +420,7 @@ class Vmig
 
 		$condition = array();
 		if($name)
-		{
 			$condition[] = "name='" . $this->get_db()->escape($name) . "'";
-		}
 
 		$condition = count($condition) ? ' WHERE '.implode(' AND ', $condition) : '';
 
@@ -485,13 +472,10 @@ class Vmig
 				break;
 
 			if($migration_down['sha1'] != $migration_up['sha1']) // if content differs
-			{
 				break;
-			}
-			elseif($name_down != $name_up) // if content is equal, but name differs
-			{
+			else if($name_down != $name_up) // if content is equal, but name differs
 				$renamed_migrations[$name_down] = $name_up;
-			}
+
 			unset($migrations_down[$name_down], $migrations_up[$name_up]);
 		}
 		return $renamed_migrations;

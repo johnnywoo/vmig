@@ -17,6 +17,7 @@ class Vmig_MysqlConnection
 
 	/**
 	 * @param string $dsn mysql://user:pass@host:port
+	 * @param string $charset
 	 */
 	public function __construct($dsn, $charset = 'cp1251')
 	{
@@ -102,7 +103,8 @@ class Vmig_MysqlConnection
 			// loading defaults from the mysql client
 			$line = exec('mysql --print-defaults', $ret, $code);
 			// non-zero code = error
-			if($code) return;
+			if($code)
+				return;
 
 			// simple and stupid
 			if(preg_match_all('/--(\w+)=(\S+)/', $line, $mm, PREG_SET_ORDER))

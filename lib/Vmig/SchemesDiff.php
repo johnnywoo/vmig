@@ -55,7 +55,7 @@ class Vmig_SchemesDiff
 						break;
 					case 'modify_keys':
 						$migration['drop_foreign_keys'][] = $this->_m_drop_foreign_key($db_action['old'], $db_action['table_name']);
-						$migration['add_foreign_keys'][] = $this->_m_add_foreign_key($db_action['new'], $db_action['table_name']);
+						$migration['add_foreign_keys'][]  = $this->_m_add_foreign_key($db_action['new'], $db_action['table_name']);
 						break;
 					case 'add_views':
 						$migration['add_views'][] = $this->_m_add_view($db_action_name, $db_action);
@@ -114,9 +114,7 @@ class Vmig_SchemesDiff
 					$_action = '(view)';
 
 				if($change_name != 'add_keys' && $change_name != 'drop_keys' && $change_name != 'modify_keys')
-				{
 					$status .= "\n {$act} {$db_name}.{$db_action_name} {$_action}%n\n";
-				}
 
 				if($change_name == 'alter_tables')
 					$status .= $this->_generate_status_text_for_alter_tables($db_action);
@@ -173,9 +171,7 @@ class Vmig_SchemesDiff
 				}
 
 				if($table_change_name == 'add_keys_f' || $table_change_name == 'drop_keys_f')
-				{
 					$_action = $action['index']['props'];
-				}
 
 				if($table_change_name == 'modify_keys_f')
 				{
@@ -200,10 +196,11 @@ class Vmig_SchemesDiff
 
 
 	/**
-	 * @param  $scheme1 MigrationsTool_Scheme
-	 * @param  $scheme2 MigrationsTool_Scheme
+	 * @param Vmig_Scheme $scheme1
+	 * @param Vmig_Scheme $scheme2
+	 * @param array $tables
 	 */
-	private function _create_diff($scheme1, $scheme2, $tables = array())
+	private function _create_diff(Vmig_Scheme $scheme1, Vmig_Scheme $scheme2, $tables = array())
 	{
 		$scheme1_data = $scheme1->get_data();
 		$scheme2_data = $scheme2->get_data();
@@ -211,15 +208,15 @@ class Vmig_SchemesDiff
 		$this->_diff_data = array();
 
 		$changes = array(
-			'add_tables' => array(),
+			'add_tables'   => array(),
 			'alter_tables' => array(),
-			'drop_tables' => array(),
-			'add_views' => array(),
-			'drop_views' => array(),
-			'alter_views' => array(),
-			'drop_keys' => array(),
-			'add_keys' => array(),
-			'modify_keys' => array(),
+			'drop_tables'  => array(),
+			'add_views'    => array(),
+			'drop_views'   => array(),
+			'alter_views'  => array(),
+			'drop_keys'    => array(),
+			'add_keys'     => array(),
+			'modify_keys'  => array(),
 		);
 
 		foreach($scheme2_data['tables'] as $table_name => $table)
@@ -228,17 +225,17 @@ class Vmig_SchemesDiff
                 continue;
 
 			if(!key_exists($table_name, $scheme1_data['tables']))
-			{
 				$changes['drop_tables'][$table_name] = $table;
-			}
 
 			foreach($table['foreign_keys'] as $index_name => $index)
 			{
 				if(!key_exists($table_name, $scheme1_data['tables']) || !key_exists($index_name, $scheme1_data['tables'][$table_name]['foreign_keys']))
+				{
 					$changes['drop_keys'][$index_name] = array(
 						'table_name' => $table_name,
-						'index' => $index,
+						'index'      => $index,
 					);
+				}
 			}
 		}
 
@@ -264,15 +261,15 @@ class Vmig_SchemesDiff
 				{
 					$changes['add_keys'][$index_name] = array(
 						'table_name' => $table_name,
-						'index' => $index,
+						'index'      => $index,
 					);
 				}
 				if(key_exists($table_name, $scheme2_data['tables']) && key_exists($index_name, $scheme2_data['tables'][$table_name]['foreign_keys']) && $index != $scheme2_data['tables'][$table_name]['foreign_keys'][$index_name])
 				{
 					$changes['modify_keys'][$index_name] = array(
 						'table_name' => $table_name,
-						'old' => $scheme2_data['tables'][$table_name]['foreign_keys'][$index_name],
-						'new' => $index,
+						'old'        => $scheme2_data['tables'][$table_name]['foreign_keys'][$index_name],
+						'new'        => $index,
 					);
 				}
 			}
@@ -306,13 +303,13 @@ class Vmig_SchemesDiff
 	private function _diff_tables($table1, $table2)
 	{
 		$changes = array(
-			'add_field' => array(),
-			'drop_field' => array(),
+			'add_field'    => array(),
+			'drop_field'   => array(),
 			'modify_field' => array(),
-			'add_key' => array(),
-			'drop_key' => array(),
-			'modify_key' => array(),
-			'props' => array(),
+			'add_key'      => array(),
+			'drop_key'     => array(),
+			'modify_key'   => array(),
+			'props'        => array(),
 		);
 		$empty_changes = $changes;
 
@@ -330,7 +327,9 @@ class Vmig_SchemesDiff
 				$add_props = " AFTER `{$prev_field}`";
 
 			if(!key_exists($name, $table2['fields']))
+			{
 				$changes['add_field'][$name] = $field_props . $add_props;
+			}
 			else if(strcasecmp($field_props, $table2['fields'][$name]) != 0)
 			{
 				$changes['modify_field'][$name] = array(
@@ -350,12 +349,16 @@ class Vmig_SchemesDiff
 		foreach($table1['keys'] as $index_name => $index)
 		{
 			if(!key_exists($index_name, $table2['keys']))
+			{
 				$changes['add_key'][$index_name] = $index;
+			}
 			else if($index != $table2['keys'][$index_name])
+			{
 				$changes['modify_key'][$index_name] = array(
 					'old' => $table2['keys'][$index_name],
 					'new' => $index,
 				);
+			}
 		}
 
 		if($table1['props'] != $table2['props'])
@@ -395,7 +398,7 @@ class Vmig_SchemesDiff
 				continue;
 
 			$table2_with_pos[$table1_pos[$field_name]] = array(
-				'field_name' => $field_name,
+				'field_name'  => $field_name,
 				'field_props' => $field_props,
 			);
 
@@ -411,7 +414,7 @@ class Vmig_SchemesDiff
 				continue;
 
 			$prev_pos = -1;
-			foreach($sequence as $key => $s_pos)
+			foreach($sequence as $s_pos)
 			{
 				if($pos < $s_pos)
 				{
@@ -552,7 +555,7 @@ class Vmig_SchemesDiff
 				 * 		'new'=>'...'
 				 * 	),
 				 *
-				 * rather then field change:
+				 * rather than field change:
 				 * 	array(
 				 * 		'field_name' => array(
 				 * 			'old'=>'...',

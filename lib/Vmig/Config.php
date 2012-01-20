@@ -97,9 +97,8 @@ class Vmig_Config
 
 		$parts = explode('.', $params['migrations-table']);
 		if(count($parts) != 2)
-		{
 			throw new Vmig_Error('Config parameter "migrations-table" should be set as "dbname.tablename"');
-		}
+
 		$this->migration_db    = $parts[0];
 		$this->migration_table = $parts[1];
 
@@ -112,7 +111,7 @@ class Vmig_Config
 		$this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
 
 		$this->fail_on_down = isset($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no';
-		$this->no_color = isset($params['no-color']);
+		$this->no_color     = isset($params['no-color']);
 	}
 
 	private static function absolutize_path($path, $cwd)
