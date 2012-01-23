@@ -33,6 +33,7 @@ try
 
 	$command = array_shift($args);
 
+	$vmig = null;
 	if(!in_array($command, array('usage', 'help', 'init')))
 	{
 		$config = Vmig_Config::find(getcwd(), $settings);
@@ -251,7 +252,10 @@ function args($short = '', array $long = array(), $argv = null)
 
 	$params = $cg->getopt2($argv, $short, $long);
 	if(PEAR::isError($params))
+	{
+		/** @var $params PEAR_Error */
 		throw new Vmig_Error('Error: ' . $params->getMessage());
+	}
 
 	$settings = array();
 	foreach($params[0] as $row)

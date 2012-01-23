@@ -56,6 +56,21 @@ class Vmig_Dump
 			$dump .=  implode("\n", $sql_array).";\n";
 		}
 
+		$r = $db->query('SHOW TRIGGERS FROM `'.$dbname.'`');
+		while($row = $r->fetch_array())
+		{
+			$name = reset($row);
+
+			$rr = $db->query('SHOW CREATE TRIGGER `'.$dbname.'`.`'.$name.'`');
+			$cr_row = $rr->fetch_array();
+			$trigger_sql = $cr_row[2];
+
+			// removing trigger params
+			$trigger_sql = preg_replace('/^(CREATE )[^\n]*? (TRIGGER)/', '$1$2', $trigger_sql);
+
+			$dump .= "\n-- trigger: {$name}\n$trigger_sql;;\n";
+		}
+
 		return new self($dump);
 	}
 

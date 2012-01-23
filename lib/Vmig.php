@@ -301,6 +301,8 @@ class Vmig
 			$databases = array_intersect(array_keys($for_what), $this->config->databases); //pick only those DBs, that are present in config->databases
 
 		$migrations = array(
+			'add_triggers'      => array(),
+			'drop_triggers'     => array(),
 			'add_foreign_keys'  => array(),
 			'drop_foreign_keys' => array(),
 			'add_views'         => array(),
@@ -335,6 +337,7 @@ class Vmig
 		}
 
 		$m_content = '';
+		$m_content .= implode('', $migrations['drop_triggers']);
 		$m_content .= implode('', $migrations['drop_foreign_keys']);
 		$m_content .= implode('', $migrations['drop_views']);
 		$m_content .= implode('', $migrations['drop_tables']);
@@ -343,6 +346,7 @@ class Vmig
 		$m_content .= implode('', $migrations['add_views']);
 		$m_content .= implode('', $migrations['alter_views']);
 		$m_content .= implode('', $migrations['add_foreign_keys']);
+		$m_content .= implode('', $migrations['add_triggers']);
 
 		return $m_content;
 	}

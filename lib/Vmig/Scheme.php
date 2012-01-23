@@ -29,8 +29,10 @@ class Vmig_Scheme
 			'views'  => array(),
 		);
 		$table_name = '';
-		foreach($lines as $line)
+		for($i = 0; $i < count($lines); $i++)
 		{
+			$line = $lines[$i];
+
 			$matches = array();
 			if(preg_match('@^CREATE TABLE `(.+)`@', $line, $matches))
 			{
@@ -41,6 +43,7 @@ class Vmig_Scheme
 					'fields'       => array(),
 					'keys'         => array(),
 					'foreign_keys' => array(),
+					'triggers'     => array(),
 					'props'        => '',
 				);
 			}
@@ -101,6 +104,28 @@ class Vmig_Scheme
 
 			if(preg_match('@(ENGINE=.+);@', $line, $matches))
 				$scheme['tables'][$table_name]['props'] = $matches[1];
+
+			if(preg_match('@CREATE TRIGGER `(.+?)` [^`]+ ON `(.+?)`@', $line, $matches))
+			{
+				$trigger_name = $matches[1];
+				$table_name   = $matches[2];
+
+				$trigger_sql = $line;
+				// load all lines until trigger ends
+				while(!preg_match('@;;$@', $line))
+				{
+					$i++;
+					if(!isset($lines[$i]))
+						throw new Vmig_Error("Cannot find end of trigger {$trigger_name}");
+
+					$line = $lines[$i];
+					$trigger_sql .= "\n{$line}";
+				}
+				// removing ;;
+				$trigger_sql = substr($trigger_sql, 0, -2);
+
+				$scheme['tables'][$table_name]['triggers'][$trigger_name] = $trigger_sql;
+			}
 		}
 
 		$this->_scheme_data = $scheme;

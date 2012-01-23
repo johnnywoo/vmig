@@ -22,6 +22,8 @@ class Vmig_SchemesDiff
 	public function render_migration()
 	{
 		$migration = array(
+			'add_triggers'      => array(),
+			'drop_triggers'     => array(),
 			'add_foreign_keys'  => array(),
 			'drop_foreign_keys' => array(),
 			'add_views'         => array(),
@@ -57,6 +59,16 @@ class Vmig_SchemesDiff
 						$migration['drop_foreign_keys'][] = $this->_m_drop_foreign_key($db_action['old'], $db_action['table_name']);
 						$migration['add_foreign_keys'][]  = $this->_m_add_foreign_key($db_action['new'], $db_action['table_name']);
 						break;
+					case 'add_triggers':
+						$migration['add_triggers'][] = $this->_m_add_trigger($db_action['trigger']);
+						break;
+					case 'drop_triggers':
+						$migration['drop_triggers'][] = $this->_m_drop_trigger($db_action_name);
+						break;
+					case 'modify_triggers':
+						$migration['drop_triggers'][] = $this->_m_drop_trigger($db_action_name);
+						$migration['add_triggers'][]  = $this->_m_add_trigger($db_action['new']);
+						break;
 					case 'add_views':
 						$migration['add_views'][] = $this->_m_add_view($db_action_name, $db_action);
 						break;
@@ -87,6 +99,16 @@ class Vmig_SchemesDiff
 				{
 					$diff_data['alter_tables'][$db_action['table_name']][$change_name.'_f'][$db_action_name] = $db_action;
 				}
+				unset($diff_data[$change_name]);
+			}
+
+			if($change_name == 'add_triggers' || $change_name == 'drop_triggers' || $change_name == 'modify_triggers')
+			{
+				foreach($changes as $db_action_name => $db_action)
+				{
+					$diff_data['alter_tables'][$db_action['table_name']][$change_name][$db_action_name] = $db_action;
+				}
+				unset($diff_data[$change_name]);
 			}
 		}
 
@@ -113,8 +135,7 @@ class Vmig_SchemesDiff
 				if($change_name == 'add_views' || $change_name == 'drop_views' || $change_name == 'alter_views')
 					$_action = '(view)';
 
-				if($change_name != 'add_keys' && $change_name != 'drop_keys' && $change_name != 'modify_keys')
-					$status .= "\n {$act} {$db_name}.{$db_action_name} {$_action}%n\n";
+				$status .= "\n {$act} {$db_name}.{$db_action_name} {$_action}%n\n";
 
 				if($change_name == 'alter_tables')
 					$status .= $this->_generate_status_text_for_alter_tables($db_action);
@@ -124,6 +145,26 @@ class Vmig_SchemesDiff
 		return $status;
 	}
 
+
+	private function _generate_status_for_trigger($change_name, $db_action)
+	{
+		if($change_name != 'alter_triggers')
+			return '('.$this->_trigger_summary($db_action['trigger']).')';
+
+		$new_summary = $this->_trigger_summary($db_action['new']);
+		$old_summary = $this->_trigger_summary($db_action['old']);
+		if($new_summary != $old_summary)
+			return "({$new_summary}) -- was ({$old_summary})";
+
+		return "({$new_summary})";
+	}
+
+	private function _trigger_summary($sql)
+	{
+		if(preg_match('/^ \s* CREATE \s+ TRIGGER \s+ \S+ \s+ (\S+) \s+ (\S+) \s+ ON/six', $sql, $m))
+			return strtolower($m[1].' '.$m[2]);
+		return '???';
+	}
 
 	private function _generate_status_text_for_alter_tables($db_action)
 	{
@@ -135,11 +176,13 @@ class Vmig_SchemesDiff
 				case 'add_field':
 				case 'add_key':
 				case 'add_keys_f':
+				case 'add_triggers':
 					$act = "%g+";
 					break;
 				case 'drop_field':
 				case 'drop_key':
 				case 'drop_keys_f':
+				case 'drop_triggers':
 					$act = "%r-";
 					break;
 				default:
@@ -179,6 +222,12 @@ class Vmig_SchemesDiff
 					$_action = '(' . $action['new']['props'] . ') -- was (' . $action['old']['props'] . ')';
 				}
 
+				if(in_array($table_change_name, array('add_triggers', 'drop_triggers', 'modify_trigers')))
+				{
+					$action_name = 'TRIGGER ' . $action_name;
+					$_action = $this->_generate_status_for_trigger($table_change_name, $action);
+				}
+
 				if(is_null($_action))
 					throw new Vmig_Error('Unknown change type "'.$table_change_name.'"');
 
@@ -208,15 +257,18 @@ class Vmig_SchemesDiff
 		$this->_diff_data = array();
 
 		$changes = array(
-			'add_tables'   => array(),
-			'alter_tables' => array(),
-			'drop_tables'  => array(),
-			'add_views'    => array(),
-			'drop_views'   => array(),
-			'alter_views'  => array(),
-			'drop_keys'    => array(),
-			'add_keys'     => array(),
-			'modify_keys'  => array(),
+			'add_tables'      => array(),
+			'alter_tables'    => array(),
+			'drop_tables'     => array(),
+			'add_views'       => array(),
+			'drop_views'      => array(),
+			'alter_views'     => array(),
+			'drop_keys'       => array(),
+			'add_keys'        => array(),
+			'modify_keys'     => array(),
+			'drop_triggers'   => array(),
+			'add_triggers'    => array(),
+			'modify_triggers' => array(),
 		);
 
 		foreach($scheme2_data['tables'] as $table_name => $table)
@@ -234,6 +286,17 @@ class Vmig_SchemesDiff
 					$changes['drop_keys'][$index_name] = array(
 						'table_name' => $table_name,
 						'index'      => $index,
+					);
+				}
+			}
+
+			foreach($table['triggers'] as $trigger_name => $trigger_sql)
+			{
+				if(!key_exists($table_name, $scheme1_data['tables']) || !key_exists($trigger_name, $scheme1_data['tables'][$table_name]['triggers']))
+				{
+					$changes['drop_triggers'][$trigger_name] = array(
+						'table_name' => $table_name,
+						'trigger'    => $trigger_sql,
 					);
 				}
 			}
@@ -270,6 +333,25 @@ class Vmig_SchemesDiff
 						'table_name' => $table_name,
 						'old'        => $scheme2_data['tables'][$table_name]['foreign_keys'][$index_name],
 						'new'        => $index,
+					);
+				}
+			}
+
+			foreach($table['triggers'] as $trigger_name => $trigger_sql)
+			{
+				if(!key_exists($table_name, $scheme2_data['tables']) || !key_exists($trigger_name, $scheme2_data['tables'][$table_name]['triggers']))
+				{
+					$changes['add_triggers'][$trigger_name] = array(
+						'table_name' => $table_name,
+						'trigger'    => $trigger_sql,
+					);
+				}
+				if(key_exists($table_name, $scheme2_data['tables']) && key_exists($trigger_name, $scheme2_data['tables'][$table_name]['triggers']) && $trigger_sql != $scheme2_data['tables'][$table_name]['foreign_keys'][$trigger_name])
+				{
+					$changes['modify_triggers'][$trigger_name] = array(
+						'table_name' => $table_name,
+						'old'        => $scheme2_data['tables'][$table_name]['triggers'][$trigger_name],
+						'new'        => $trigger_sql,
 					);
 				}
 			}
@@ -635,6 +717,27 @@ class Vmig_SchemesDiff
 	private function _m_drop_foreign_key($index, $table_name)
 	{
 		return "ALTER TABLE `{$this->_db_name}`.`{$table_name}` DROP FOREIGN KEY `{$index['name']}`;\n";
+	}
+
+
+	private function _m_add_trigger($trigger_sql)
+	{
+		$delimiter = ';;';
+		while(strpos($trigger_sql, $delimiter) !== false)
+		{
+			$delimiter .= ';';
+		}
+
+		return "USE `{$this->_db_name}`;\n".
+			"DELIMITER {$delimiter}\n".
+			"{$trigger_sql}{$delimiter}\n".
+			"DELIMITER ;\n\n";
+	}
+
+
+	private function _m_drop_trigger($trigger_name)
+	{
+		return "DROP TRIGGER `{$this->_db_name}`.`{$trigger_name}`;\n\n";
 	}
 
 
