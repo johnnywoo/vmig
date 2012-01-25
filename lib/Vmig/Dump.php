@@ -68,7 +68,7 @@ class Vmig_Dump
 			// removing trigger params
 			$trigger_sql = preg_replace('/^(CREATE )[^\n]*? (TRIGGER)/', '$1$2', $trigger_sql);
 
-			$dump .= "\n-- trigger: {$name}\n$trigger_sql;;\n";
+			$dump .= "\n-- trigger: {$name}\n$trigger_sql\n-- trigger end: {$name}\n";
 		}
 
 		return new self($dump);

@@ -722,18 +722,25 @@ class Vmig_SchemesDiff
 	}
 
 
+	const SQL_DELIMITER = ';';
 	private function _m_add_trigger($trigger_sql)
 	{
-		$delimiter = ';;';
+		$delimiter = static::SQL_DELIMITER;
 		while(strpos($trigger_sql, $delimiter) !== false)
 		{
-			$delimiter .= ';';
+			$delimiter .= static::SQL_DELIMITER;
 		}
 
-		return "USE `{$this->_db_name}`;\n".
-			"DELIMITER {$delimiter}\n".
-			"{$trigger_sql}{$delimiter}\n".
-			"DELIMITER ;\n\n";
+		$sql = "USE `{$this->_db_name}`;\n";
+		// ; is a default delimiter in MySQL
+		// so if the trigger is one statement only, we can have less noise in the migration
+		if($delimiter != ';')
+			$sql .= "DELIMITER {$delimiter}\n";
+		$sql .= "{$trigger_sql}{$delimiter}\n";
+		if($delimiter != ';')
+			$sql .= "DELIMITER ;\n";
+		$sql .= "\n";
+		return $sql;
 	}
 
 
