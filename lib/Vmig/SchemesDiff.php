@@ -148,7 +148,7 @@ class Vmig_SchemesDiff
 
 	private function _generate_status_for_trigger($change_name, $db_action)
 	{
-		if($change_name != 'alter_triggers')
+		if($change_name != 'modify_triggers')
 			return '(' . $this->_trigger_summary($db_action['trigger']) . ')';
 
 		$new_summary = $this->_trigger_summary($db_action['new']);

@@ -377,18 +377,7 @@ class Vmig
 		$migration = preg_replace('@-- Migration (Down|Up)@', '', $migration);
 		$migration = trim($migration)."\n";
 
-		echo $migration;
-
-		try
-		{
-			$this->get_db()->multi_query($migration);
-		}
-		catch(Vmig_MysqlError $e)
-		{
-			// ignore empty query error
-			if($e->getCode() != Vmig_MysqlError::ER_EMPTY_QUERY)
-				throw new Exception($e->getMessage(), $e->getCode(), $e);
-		}
+		$this->get_db()->execute_sql_script($migration);
 	}
 
 	private function _get_migrations_from_files($name = '')
@@ -451,7 +440,7 @@ class Vmig
 			CREATE TABLE IF NOT EXISTS `{$this->config->migration_db}`.`{$this->config->migration_table}` (
 				`id` int(11) NOT NULL auto_increment,
 				`name` varchar(255) NOT NULL default '',
-				`query` text NOT NULL,
+				`query` longtext NOT NULL,
 				`sha1` VARCHAR(40) NOT NULL,
 				PRIMARY KEY (`id`),
 				UNIQUE KEY `name` (`name`)

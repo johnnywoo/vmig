@@ -10,6 +10,8 @@ class Vmig_MysqlConnection
 	public $password = '';
 	public $charset  = '';
 
+	public $mysql_client = 'mysql';
+
 	/**
 	 * @var mysqli
 	 */
@@ -18,8 +20,9 @@ class Vmig_MysqlConnection
 	/**
 	 * @param string $dsn mysql://user:pass@host:port
 	 * @param string $charset
+	 * @param string $mysql_client
 	 */
-	public function __construct($dsn, $charset = 'cp1251')
+	public function __construct($dsn, $charset = 'cp1251', $mysql_client = 'mysql')
 	{
 		$p = parse_url($dsn);
 		if(isset($p['scheme']) && strtolower($p['scheme']) == 'mysql')
@@ -30,6 +33,8 @@ class Vmig_MysqlConnection
 			$this->password = (string) @$p['pass'];
 		}
 		$this->charset = $charset;
+
+		$this->mysql_client = $mysql_client;
 
 		$this->_load_connection_defaults();
 	}
@@ -67,25 +72,44 @@ class Vmig_MysqlConnection
 	}
 
 	/**
-	 * @throws Exception
 	 * @param string $sql
-	 * @return mysqli_result
 	 */
-	public function multi_query($sql)
+	public function execute_sql_script($sql)
 	{
-		$this->_connect();
-		$this->_connection->multi_query($sql);
-
-		do
+		if($this->charset)
 		{
-			if($result = $this->_connection->use_result())
-				$result->close();
-		} while ($this->_connection->next_result());
+			$this->_connect();
+			$sql = "SET NAMES ".$this->_connection->real_escape_string($this->charset).";\n\n$sql";
+		}
 
-		if($this->_connection->errno)
-			throw new Vmig_MysqlError('DB error: '.$this->_connection->error, $this->_connection->errno);
+		echo $sql;
 
-		return true;
+		$cmd = escapeshellcmd($this->mysql_client);
+		$cmd .= $this->_make_mysql_client_args();
+		$cmd .= ' --execute=' . escapeshellarg($sql).' 2>&1';
+
+		exec($cmd, $out, $error_code);
+		if($error_code)
+			throw new Vmig_MysqlError(join("\n", $out));
+	}
+
+	private function _make_mysql_client_args()
+	{
+		$args = '';
+
+		if($this->host != '')
+			$args .= ' --host=' . escapeshellarg($this->host);
+
+		if($this->port != '')
+			$args .= ' --port=' . escapeshellarg($this->port);
+
+		if($this->user != '')
+			$args .= ' --user=' . escapeshellarg($this->user);
+
+		if($this->password != '')
+			$args .= ' --password=' . escapeshellarg($this->password);
+
+		return $args;
 	}
 
 	public function escape($str)
@@ -101,7 +125,7 @@ class Vmig_MysqlConnection
 		if(empty($this->host) || empty($this->port) || empty($this->user) || empty($this->password))
 		{
 			// loading defaults from the mysql client
-			$line = exec('mysql --print-defaults', $ret, $code);
+			$line = exec(escapeshellcmd($this->mysql_client).' --print-defaults', $ret, $code);
 			// non-zero code = error
 			if($code)
 				return;

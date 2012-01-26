@@ -20,6 +20,7 @@ try
 		'schemes-path=',
 		'migrations-table=',
 		'connection=',
+		'mysql-client=',
 		'fail-on-down',
 		'no-color',
 	);

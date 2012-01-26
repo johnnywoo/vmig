@@ -112,16 +112,16 @@ class Vmig_Scheme
 
 				$trigger_sql = '';
 				// load all lines until trigger ends
-				while(!preg_match('{^-- trigger end: '.preg_quote($trigger_name).'$}', $line))
+				while(!preg_match('{^-- trigger end: '.preg_quote($trigger_name).'$}', $lines[$i]))
 				{
 					if(!isset($lines[$i]))
 						throw new Vmig_Error("Cannot find end of trigger {$trigger_name}");
 
-					$line = $lines[$i];
-					$trigger_sql .= $line."\n";
+					$trigger_sql .= $lines[$i]."\n";
 
 					$i++;
 				}
+				$trigger_sql = substr($trigger_sql, 0, -1); // removing \n
 
 				$scheme['tables'][$table_name]['triggers'][$trigger_name] = $trigger_sql;
 			}

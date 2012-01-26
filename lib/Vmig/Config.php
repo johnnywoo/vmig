@@ -78,6 +78,7 @@ class Vmig_Config
 	public $migration_db    = '';
 	public $migration_table = '';
 	public $connection      = '';
+	public $mysql_client    = '';
 	public $fail_on_down    = '';
 	public $no_color        = false;
 	public $charset         = '';
@@ -107,6 +108,8 @@ class Vmig_Config
 		// mysql driver will try to find the connection in .my.cnf
 		// so this is not a required parameter
 		$this->connection = isset($params['connection']) ? $params['connection'] : '';
+
+		$this->mysql_client = isset($params['mysql-client']) ? $params['mysql-client'] : 'mysql';
 
 		$this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
 

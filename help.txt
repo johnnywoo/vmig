@@ -17,6 +17,10 @@ Options:
     console client (essentially from ~/.my.cnf). You may review them by running
     'mysql --print-defaults'.
 
+  --mysql-client=/path/to/mysql
+    MySQL client filename to run migrations with. Default is just 'mysql',
+    i.e. assuming the client is in PATH.
+
   --databases='dbname dbname dbname'
     List of database names which are watched for migrations.
 

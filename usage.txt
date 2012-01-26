@@ -3,6 +3,7 @@ Usage: vmig [options] command
 Options:
   --config=file
   --connection=uri
+  --mysql-client=/path/to/mysql
   --databases="db db2"
   --fail-on-down
   --migrations-path=path
