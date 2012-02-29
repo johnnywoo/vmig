@@ -82,13 +82,22 @@ class Vmig_MysqlConnection
 			$sql = "SET NAMES ".$this->_connection->real_escape_string($this->charset).";\n\n$sql";
 		}
 
+		$tmp = tempnam(PATH_SEPARATOR, 'vmig_');
+		if($tmp === false)
+			throw new Vmig_Error('Unable to create a temporary file');
+
+		file_put_contents($tmp, $sql);
+
 		echo $sql;
 
 		$cmd = escapeshellcmd($this->mysql_client);
 		$cmd .= $this->_make_mysql_client_args();
-		$cmd .= ' --execute=' . escapeshellarg($sql).' 2>&1';
+		$cmd .= ' <' . escapeshellarg($tmp).' 2>&1';
 
 		exec($cmd, $out, $error_code);
+
+		unlink($tmp);
+
 		if($error_code)
 			throw new Vmig_MysqlError(join("\n", $out));
 	}
