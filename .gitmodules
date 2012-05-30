@@ -1,0 +1,3 @@
+[submodule "vendor/cliff"]
+	path = vendor/cliff
+	url = git://github.com/johnnywoo/cliff.git

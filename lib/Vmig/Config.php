@@ -7,6 +7,7 @@ class Vmig_Config
 	/**
 	 * @param string $cwd
 	 * @param array $options
+	 * @throws Vmig_Error
 	 * @return Vmig_Config
 	 */
 	public static function find($cwd, array $options = array())
@@ -49,7 +50,7 @@ class Vmig_Config
 	{
 		foreach(self::$required_fields as $name)
 		{
-			if(empty($options[$name]))
+			if(isset($options[$name]))
 				return false;
 		}
 		return true;
@@ -58,6 +59,7 @@ class Vmig_Config
 	/**
 	 * @param string $file
 	 * @param array $options
+	 * @throws Vmig_Error
 	 * @return Vmig_Config
 	 */
 	public static function load($file, array $options = array())
@@ -113,8 +115,9 @@ class Vmig_Config
 
 		$this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
 
-		$this->fail_on_down = isset($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no';
-		$this->no_color     = isset($params['no-color']);
+		// boolean values: "", "no" and false is off; "yes" and true is on (strings from file config, bool from CLI options)
+		$this->fail_on_down = (!empty($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no');
+		$this->no_color     = (!empty($params['no-color']) && strtolower($params['no-color']) != 'no');
 	}
 
 	private static function absolutize_path($path, $cwd)
