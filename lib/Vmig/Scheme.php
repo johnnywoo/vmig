@@ -1,132 +1,132 @@
-<?
+<?php
 
-class Vmig_Scheme
+namespace Vmig;
+
+class Scheme
 {
-	private $_scheme_data = array(
-		'tables' => array(),
-		'views'  => array(),
-	);
+    private $schemeData = array(
+        'tables' => array(),
+        'views'  => array(),
+    );
 
 
-	public function __construct($dump)
-	{
-		$this->_load_from_dump($dump);
-	}
+    public function __construct($dump)
+    {
+        $this->loadFromDump($dump);
+    }
 
 
-	public function get_data()
-	{
-		return $this->_scheme_data;
-	}
+    public function getData()
+    {
+        return $this->schemeData;
+    }
 
 
-	private function _load_from_dump($dump)
-	{
-		$lines = explode("\n", $dump);
+    private function loadFromDump($dump)
+    {
+        $lines = explode("\n", $dump);
 
-		$scheme = array(
-			'tables' => array(),
-			'views'  => array(),
-		);
-		$table_name = '';
-		for($i = 0; $i < count($lines); $i++)
-		{
-			$line = $lines[$i];
+        $scheme = array(
+            'tables' => array(),
+            'views'  => array(),
+        );
+        $tableName = '';
+        for ($i = 0; $i < count($lines); $i++) {
+            $line = $lines[$i];
 
-			$matches = array();
-			if(preg_match('@^CREATE TABLE `(.+)`@', $line, $matches))
-			{
-				$table_name = $matches[1];
+            $matches = array();
+            if (preg_match('@^CREATE TABLE `(.+)`@', $line, $matches)) {
+                $tableName = $matches[1];
 
-				$scheme['tables'][$table_name] = array(
-					'name'         => $table_name,
-					'fields'       => array(),
-					'keys'         => array(),
-					'foreign_keys' => array(),
-					'triggers'     => array(),
-					'props'        => '',
-				);
-			}
+                $scheme['tables'][$tableName] = array(
+                    'name'         => $tableName,
+                    'fields'       => array(),
+                    'keys'         => array(),
+                    'foreign_keys' => array(),
+                    'triggers'     => array(),
+                    'props'        => '',
+                );
+            }
 
-			if(preg_match('@CREATE VIEW `(.+?)` (AS .*);@', $line, $matches))
-			{
-				$view_name = $matches[1];
-				$view      = $matches[2];
+            if (preg_match('@CREATE VIEW `(.+?)` (AS .*);@', $line, $matches)) {
+                $viewName = $matches[1];
+                $view     = $matches[2];
 
-				$view_name = preg_replace('@.+?`\.`(.+)@', '$1', $view_name);
+                $viewName = preg_replace('@.+?`\.`(.+)@', '$1', $viewName);
 
-				$scheme['views'][$view_name] = $view;
-			}
+                $scheme['views'][$viewName] = $view;
+            }
 
-			if(preg_match('@^\s+`(.+)` (.+)@', $line, $matches))
-			{
-				$field_name  = $matches[1];
-				$field_props = $matches[2];
+            if (preg_match('@^\s+`(.+)` (.+)@', $line, $matches)) {
+                $fieldName  = $matches[1];
+                $fieldProps = $matches[2];
 
-				if($field_props[strlen($field_props) - 1] == ',')
-					$field_props = substr($field_props, 0, strlen($field_props) - 1);
+                if ($fieldProps[strlen($fieldProps) - 1] == ',') {
+                    $fieldProps = substr($fieldProps, 0, strlen($fieldProps) - 1);
+                }
 
-				$scheme['tables'][$table_name]['fields'][$field_name] = $field_props;
-			}
+                $scheme['tables'][$tableName]['fields'][$fieldName] = $fieldProps;
+            }
 
-			if(preg_match('@\s+(PRIMARY|UNIQUE)? KEY\s?(?:`(.*?)`)?\s?\((.*)\)@', $line, $matches))
-			{
-				$index_name = 'PRIMARY';
-				if(!empty($matches[2]))
-					$index_name = $matches[2];
+            if (preg_match('@\s+(PRIMARY|UNIQUE)? KEY\s?(?:`(.*?)`)?\s?\((.*)\)@', $line, $matches)) {
+                $indexName = 'PRIMARY';
+                if (!empty($matches[2])) {
+                    $indexName = $matches[2];
+                }
 
-				$unique = false;
-				if($index_name == 'PRIMARY' || $matches[1] == 'UNIQUE')
-					$unique = true;
+                $unique = false;
+                if ($indexName == 'PRIMARY' || $matches[1] == 'UNIQUE') {
+                    $unique = true;
+                }
 
-				$fields = $matches[3];
+                $fields = $matches[3];
 
-				$scheme['tables'][$table_name]['keys'][$index_name] = array(
-					'name'   => $index_name,
-					'unique' => $unique,
-					'fields' => $fields,
-				);
-			}
+                $scheme['tables'][$tableName]['keys'][$indexName] = array(
+                    'name'   => $indexName,
+                    'unique' => $unique,
+                    'fields' => $fields,
+                );
+            }
 
-			if(preg_match('@CONSTRAINT `(.+)` (FOREIGN KEY .+)@', $line, $matches))
-			{
-				$index_name  = $matches[1];
-				$index_props = $matches[2];
+            if (preg_match('@CONSTRAINT `(.+)` (FOREIGN KEY .+)@', $line, $matches)) {
+                $indexName  = $matches[1];
+                $indexProps = $matches[2];
 
-				if($index_props[strlen($index_props) - 1] == ',')
-					$index_props = substr($index_props, 0, strlen($index_props) - 1);
+                if ($indexProps[strlen($indexProps) - 1] == ',') {
+                    $indexProps = substr($indexProps, 0, strlen($indexProps) - 1);
+                }
 
-				$scheme['tables'][$table_name]['foreign_keys'][$index_name] = array(
-					'name'  => $index_name,
-					'props' => $index_props,
-				);
-			}
+                $scheme['tables'][$tableName]['foreign_keys'][$indexName] = array(
+                    'name'  => $indexName,
+                    'props' => $indexProps,
+                );
+            }
 
-			if(preg_match('@(ENGINE=.+);@', $line, $matches))
-				$scheme['tables'][$table_name]['props'] = $matches[1];
+            if (preg_match('@(ENGINE=.+);@', $line, $matches)) {
+                $scheme['tables'][$tableName]['props'] = $matches[1];
+            }
 
-			if(preg_match('@CREATE TRIGGER `(.+?)` [^`]+ ON `(.+?)`@', $line, $matches))
-			{
-				$trigger_name = $matches[1];
-				$table_name   = $matches[2];
+            if (preg_match('@CREATE TRIGGER `(.+?)` [^`]+ ON `(.+?)`@', $line, $matches)) {
+                $triggerName = $matches[1];
+                $tableName   = $matches[2];
 
-				$trigger_sql = '';
-				// load all lines until trigger ends
-				while(!preg_match('{^-- trigger end: '.preg_quote($trigger_name).'$}', $lines[$i]))
-				{
-					if(!isset($lines[$i]))
-						throw new Vmig_Error("Cannot find end of trigger {$trigger_name}");
+                $triggerSql = '';
+                // load all lines until trigger ends
+                while (!preg_match('{^-- trigger end: ' . preg_quote($triggerName) . '$}', $lines[$i])) {
+                    if (!isset($lines[$i])) {
+                        throw new Error("Cannot find end of trigger {$triggerName}");
+                    }
 
-					$trigger_sql .= $lines[$i]."\n";
+                    $triggerSql .= $lines[$i] . "\n";
 
-					$i++;
-				}
-				$trigger_sql = substr($trigger_sql, 0, -1); // removing \n
+                    $i++;
+                }
+                $triggerSql = substr($triggerSql, 0, -1); // removing \n
 
-				$scheme['tables'][$table_name]['triggers'][$trigger_name] = $trigger_sql;
-			}
-		}
+                $scheme['tables'][$tableName]['triggers'][$triggerName] = $triggerSql;
+            }
+        }
 
-		$this->_scheme_data = $scheme;
-	}
+        $this->schemeData = $scheme;
+    }
 }

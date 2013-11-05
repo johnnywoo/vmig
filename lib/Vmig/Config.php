@@ -1,133 +1,139 @@
-<?
+<?php
 
-class Vmig_Config
+namespace Vmig;
+
+class Config
 {
-	const DEFAULT_CONF_FILE = '.vmig.cnf';
+    const DEFAULT_CONF_FILE = '.vmig.cnf';
 
-	/**
-	 * @param string $cwd
-	 * @param array $options
-	 * @throws Vmig_Error
-	 * @return Vmig_Config
-	 */
-	public static function find($cwd, array $options = array())
-	{
-		// CLI paths are relative to CWD, not config
-		if(isset($options['migrations-path']))
-			$options['migrations-path'] = self::absolutize_path($options['migrations-path'], $cwd);
-		if(isset($options['schemes-path']))
-			$options['schemes-path'] = self::absolutize_path($options['schemes-path'], $cwd);
+    /**
+     * @param string $cwd
+     * @param array $options
+     * @throws Error
+     * @return Config
+     */
+    public static function find($cwd, array $options = array())
+    {
+        // CLI paths are relative to CWD, not config
+        if (isset($options['migrations-path'])) {
+            $options['migrations-path'] = self::absolutizePath($options['migrations-path'], $cwd);
+        }
+        if (isset($options['schemes-path'])) {
+            $options['schemes-path'] = self::absolutizePath($options['schemes-path'], $cwd);
+        }
 
-		if(isset($options['config']))
-		{
-			$file = $options['config'];
-		}
-		else
-		{
-			while(true)
-			{
-				$file = $cwd.DIRECTORY_SEPARATOR.self::DEFAULT_CONF_FILE;
-				if(file_exists($file))
-					break; // found
+        $file = '';
+        if (isset($options['config'])) {
+            $file = $options['config'];
+        } else {
+            while (true) {
+                $file = $cwd . DIRECTORY_SEPARATOR . self::DEFAULT_CONF_FILE;
+                if (file_exists($file)) {
+                    break;
+                } // found
 
-				$next = dirname($cwd);
-				if($next == $cwd)
-				{
-					// config file is not found
-					if(self::is_config_required($options))
-						throw new Vmig_Error('Not a vmig project: '.self::DEFAULT_CONF_FILE.' is not found');
+                $next = dirname($cwd);
+                if ($next == $cwd) {
+                    // config file is not found
+                    if (self::isConfigRequired($options)) {
+                        throw new Error('Not a vmig project: ' . self::DEFAULT_CONF_FILE . ' is not found');
+                    }
 
-					return new static($options, $cwd);
-				}
-				$cwd = $next;
-			}
-		}
-		return static::load($file, $options);
-	}
+                    return new static($options, $cwd);
+                }
+                $cwd = $next;
+            }
+        }
+        return static::load($file, $options);
+    }
 
-	// we do not need config file if all required parameters were specified in CLI args
-	private static function is_config_required($options)
-	{
-		foreach(self::$required_fields as $name)
-		{
-			if(isset($options[$name]))
-				return false;
-		}
-		return true;
-	}
+    // we do not need config file if all required parameters were specified in CLI args
+    private static function isConfigRequired($options)
+    {
+        foreach (self::$requiredFields as $name) {
+            if (isset($options[$name])) {
+                return false;
+            }
+        }
+        return true;
+    }
 
-	/**
-	 * @param string $file
-	 * @param array $options
-	 * @throws Vmig_Error
-	 * @return Vmig_Config
-	 */
-	public static function load($file, array $options = array())
-	{
-		$params = parse_ini_file($file);
-		if(!is_array($params))
-			throw new Vmig_Error('Unable to read config from "'.$file.'"');
+    /**
+     * @param string $file
+     * @param array $options
+     * @throws Error
+     * @return Config
+     */
+    public static function load($file, array $options = array())
+    {
+        $params = parse_ini_file($file);
+        if (!is_array($params)) {
+            throw new Error('Unable to read config from "' . $file . '"');
+        }
 
-		$options += $params; // CLI options override config
+        $options += $params; // CLI options override config
 
-		return new static($options, dirname($file));
-	}
+        return new static($options, dirname($file));
+    }
 
-	private static $required_fields = array('databases', 'migrations-path', 'schemes-path', 'migrations-table');
+    private static $requiredFields = array('databases', 'migrations-path', 'schemes-path', 'migrations-table');
 
-	public $migrations_path = '';
-	public $schemes_path    = '';
-	public $migration_db    = '';
-	public $migration_table = '';
-	public $connection      = '';
-	public $mysql_client    = '';
-	public $fail_on_down    = '';
-	public $no_color        = false;
-	public $charset         = '';
+    public $migrationsPath = '';
+    public $schemesPath    = '';
+    public $migrationDb    = '';
+    public $migrationTable = '';
+    public $connection     = '';
+    public $mysqlClient    = '';
+    public $failOnDown     = '';
+    public $noColor        = false;
+    public $charset        = '';
 
-	public $databases = array();
+    public $databases = array();
 
-	public function __construct(array $params, $dir = '')
-	{
-		foreach(self::$required_fields as $name)
-		{
-			if(empty($params[$name]))
-				throw new Vmig_Error('Config parameter "'.$name.'" is not set');
-		}
+    public function __construct(array $params, $dir = '')
+    {
+        foreach (self::$requiredFields as $name) {
+            if (empty($params[$name])) {
+                throw new Error('Config parameter "' . $name . '" is not set');
+            }
+        }
 
-		$this->migrations_path = self::absolutize_path($params['migrations-path'], $dir);
-		$this->schemes_path    = self::absolutize_path($params['schemes-path'], $dir);
+        $this->migrationsPath = self::absolutizePath($params['migrations-path'], $dir);
+        $this->schemesPath    = self::absolutizePath($params['schemes-path'], $dir);
 
-		$parts = explode('.', $params['migrations-table']);
-		if(count($parts) != 2)
-			throw new Vmig_Error('Config parameter "migrations-table" should be set as "dbname.tablename"');
+        $parts = explode('.', $params['migrations-table']);
+        if (count($parts) != 2) {
+            throw new Error('Config parameter "migrations-table" should be set as "dbname.tablename"');
+        }
 
-		$this->migration_db    = $parts[0];
-		$this->migration_table = $parts[1];
+        $this->migrationDb    = $parts[0];
+        $this->migrationTable = $parts[1];
 
-		$this->databases = preg_split('/\s+/', $params['databases'], -1, PREG_SPLIT_NO_EMPTY);
+        $this->databases = preg_split('/\s+/', $params['databases'], -1, PREG_SPLIT_NO_EMPTY);
 
-		// mysql driver will try to find the connection in .my.cnf
-		// so this is not a required parameter
-		$this->connection = isset($params['connection']) ? $params['connection'] : '';
+        // mysql driver will try to find the connection in .my.cnf
+        // so this is not a required parameter
+        $this->connection = isset($params['connection']) ? $params['connection'] : '';
 
-		$this->mysql_client = isset($params['mysql-client']) ? $params['mysql-client'] : 'mysql';
+        $this->mysqlClient = isset($params['mysql-client']) ? $params['mysql-client'] : 'mysql';
 
-		$this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
+        $this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
 
-		// boolean values: "", "no" and false is off; "yes" and true is on (strings from file config, bool from CLI options)
-		$this->fail_on_down = (!empty($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no');
-		$this->no_color     = (!empty($params['no-color']) && strtolower($params['no-color']) != 'no');
-	}
+        // boolean values: "", "no" and false is off; "yes" and true is on (strings from file config, bool from CLI options)
+        $this->failOnDown = (!empty($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no');
+        $this->noColor    = (!empty($params['no-color']) && strtolower($params['no-color']) != 'no');
+    }
 
-	private static function absolutize_path($path, $cwd)
-	{
-		if($cwd == '')
-			return $path;
+    private static function absolutizePath($path, $cwd)
+    {
+        if ($cwd == '') {
+            return $path;
+        }
 
-		if(preg_match('@^([a-z]+:[/\\\\]|/)@i', $path))
-			return $path;
+        if (preg_match('@^([a-z]+:[/\\\\]|/)@i', $path)) {
+            return $path;
+        }
 
-		return $cwd.DIRECTORY_SEPARATOR.$path;
-	}
+        return $cwd . DIRECTORY_SEPARATOR . $path;
+    }
 }

@@ -1,8 +1,10 @@
-<?
+<?php
 
-require_once dirname(__FILE__).'/Error.php';
+namespace Vmig;
 
-class Vmig_MysqlError extends Vmig_Error
+require_once __DIR__ . '/Error.php';
+
+class MysqlError extends Error
 {
-	const ER_EMPTY_QUERY = 1065;
+    const ER_EMPTY_QUERY = 1065;
 }

@@ -1,10 +1,12 @@
 <?php
 
+namespace Vmig;
+
 // optional dependency: pear package Console_Color
 
-require_once dirname(__FILE__) . '/lib/Vmig/Config.php';
-require_once dirname(__FILE__) . '/lib/Vmig.php';
-require_once dirname(__FILE__) . '/vendor/cliff/lib/Cliff.php';
+require_once __DIR__ . '/lib/Vmig/Config.php';
+require_once __DIR__ . '/lib/Vmig.php';
+require_once __DIR__ . '/vendor/cliff/lib/Cliff.php';
 
 use cliff\Cliff;
 use cliff\Exception_ParseError;
@@ -171,180 +173,161 @@ Cliff::run(Cliff::config()
 );
 
 
-$command = $_REQUEST['command'];
-$command_options = $_REQUEST[$command];
+$command    = $_REQUEST['command'];
+$cmdOptions = $_REQUEST[$command];
 
 $options = array_filter($_REQUEST, function($val) {
-	return !is_null($val);
+	return $val !== null;
 });
 
-$config = Vmig_Config::find(getcwd(), $options);
-$vmig = new Vmig($config);
+$config = Config::find(getcwd(), $options);
+$vmig   = new Vmig($config);
 
-switch($command)
-{
+switch ($command) {
 	case 'init':
-		echo "Creating default config in ".Vmig_Config::DEFAULT_CONF_FILE."\n";
-		copy(dirname(__FILE__).'/example.vmig.cnf', Vmig_Config::DEFAULT_CONF_FILE);
+        echo "Creating default config in " . Config::DEFAULT_CONF_FILE . "\n";
+        copy(__DIR__ . '/example.vmig.cnf', Config::DEFAULT_CONF_FILE);
 
-		$config = Vmig_Config::load(Vmig_Config::DEFAULT_CONF_FILE);
-		if(!file_exists($config->schemes_path))
-		{
-			echo "Creating directory for db schemes: {$config->schemes_path}\n";
-			mkdir($config->schemes_path, 0777, true);
-		}
-		else
-		{
-			echo "Using directory for db schemes: {$config->schemes_path}\n";
-		}
+        $config = Config::load(Config::DEFAULT_CONF_FILE);
+        if (!file_exists($config->schemesPath)) {
+            echo "Creating directory for db schemes: {$config->schemesPath}\n";
+            mkdir($config->schemesPath, 0777, true);
+        } else {
+            echo "Using directory for db schemes: {$config->schemesPath}\n";
+        }
 
-		if(!file_exists($config->migrations_path))
-		{
-			echo "Creating directory for migrations: {$config->migrations_path}\n";
-			mkdir($config->migrations_path, 0777, true);
-		}
-		else
-		{
-			echo "Using directory for migrations: {$config->migrations_path}\n";
-		}
-		break;
+        if (!file_exists($config->migrationsPath)) {
+            echo "Creating directory for migrations: {$config->migrationsPath}\n";
+            mkdir($config->migrationsPath, 0777, true);
+        } else {
+            echo "Using directory for migrations: {$config->migrationsPath}\n";
+        }
+        break;
 
-	case 'diff':
-	case 'd':
-		$is_reverse = $command_options['reverse'];
-		$diff = $vmig->diff($is_reverse);
-		if(!empty($diff))
-		{
-			if($is_reverse)
-				echo "\n-- These queries will destroy your changes to database:\n\n";
-			else
-				echo "\n-- These queries were applied to your database:\n\n";
+    case 'diff':
+    case 'd':
+        $isReverse = $cmdOptions['reverse'];
 
-			echo $diff;
-			exit(EXIT_MODIFIED);
-		}
-		break;
+        $diff = $vmig->diff($isReverse);
+        if (!empty($diff)) {
+            if ($isReverse) {
+                echo "\n-- These queries will destroy your changes to database:\n\n";
+            } else {
+                echo "\n-- These queries were applied to your database:\n\n";
+            }
 
-	case 'create':
-	case 'c':
-		$is_force   = $command_options['force'];
-		$no_approve = $command_options['no-approve'];
-		$name       = $command_options['name'];
+            echo $diff;
+            exit(EXIT_MODIFIED);
+        }
+        break;
 
-		if($name === null)
-		{
-			// assuming git branch name
-			$name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
-			if($name == 'master')
-				$name = '';
+    case 'create':
+    case 'c':
+        $isForce   = $cmdOptions['force'];
+        $noApprove = $cmdOptions['no-approve'];
+        $name      = $cmdOptions['name'];
 
-			// if there is no name, let's ask for it
-			if($name == '')
-			{
-				do
-				{
-					echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
-					$name = fgets(STDIN);
-					$name = trim($name);
-				} while (!preg_match('/^\w+$/', $name)); // don't allow empty names and weird chars
-			}
-		}
+        if ($name === null) {
+            // assuming git branch name
+            $name = exec('git branch --no-color 2>/dev/null | sed -e \'/^[^*]/d\' -e \'s/* \(.*\)/\1/\'');
+            if ($name == 'master') {
+                $name = '';
+            }
 
-		$sql = $vmig->create_migrations($is_force, $name ? '_' . $name : '');
-		if(trim($sql) != '')
-		{
-			echo $sql;
-			if($no_approve)
-			{
-				echo "-- Do not forget to APPROVE the created migration before committing!\n";
-				echo "-- Otherwise database dump in the repository will be out of sync.\n";
-			}
-			else
-			{
-				echo "-- Approving created migration...\n";
-				$vmig->approve_migration();
-			}
-		}
-		break;
+            // if there is no name, let's ask for it
+            if ($name == '') {
+                do {
+                    echo "Please enter a name for the migration (filename will be NNNNNNNNNN_name.sql):\n";
+                    $name = fgets(STDIN);
+                    $name = trim($name);
+                } while (!preg_match('/^\w+$/', $name)); // don't allow empty names and weird chars
+            }
+        }
 
-	case 'reset':
-	case 'r':
-		$for_what = array();
-		foreach($command_options['db_or_table'] as $v)
-		{
-			@list($db, $table) = explode('.', $v);
-			if($db)
-			{
-				if($table && (!array_key_exists($db, $for_what) || sizeof($for_what[$db]) > 0))
-				{
-					$for_what[$db][] = $table;
-				}
-				else
-				{
-					$for_what[$db] = array();
-				}
-			}
-		}
-		$vmig->reset_db($for_what);
-		break;
+        $sql = $vmig->createMigrations($isForce, $name ? '_' . $name : '');
+        if (trim($sql) != '') {
+            echo $sql;
+            if ($noApprove) {
+                echo "-- Do not forget to APPROVE the created migration before committing!\n";
+                echo "-- Otherwise database dump in the repository will be out of sync.\n";
+            } else {
+                echo "-- Approving created migration...\n";
+                $vmig->approveMigration();
+            }
+        }
+        break;
 
-	case 'approve':
-	case 'a':
-		$vmig->approve_migration($command_options['filename']);
-		break;
+    case 'reset':
+    case 'r':
+        $forWhat = array();
+        foreach ($cmdOptions['db_or_table'] as $v) {
+            @list($db, $table) = explode('.', $v);
+            if ($db) {
+                if ($table && (!array_key_exists($db, $forWhat) || sizeof($forWhat[$db]) > 0)) {
+                    $forWhat[$db][] = $table;
+                } else {
+                    $forWhat[$db] = array();
+                }
+            }
+        }
+        $vmig->resetDb($forWhat);
+        break;
 
-	case 'migrate':
-	case 'm':
-		$vmig->migrate();
-		break;
+    case 'approve':
+    case 'a':
+        $vmig->approveMigration($cmdOptions['filename']);
+        break;
 
-	case 'status':
-	case 's':
-		$vmig->status();
-		break;
+    case 'migrate':
+    case 'm':
+        $vmig->migrate();
+        break;
 
-	case 'up':
-	case 'down':
-		$is_from_file = $command_options['from-file'];
-		$is_from_db   = $command_options['from-db'];
-		$no_execute   = $command_options['no-execute'];
-		$files        = $command_options['filename'];
+    case 'status':
+    case 's':
+        $vmig->status();
+        break;
 
-		if(!count($files))
-			throw new Vmig_Error('Migration name is not specified');
+    case 'up':
+    case 'down':
+        $isFromFile = $cmdOptions['from-file'];
+        $isFromDb   = $cmdOptions['from-db'];
+        $noExecute  = $cmdOptions['no-execute'];
+        $files      = $cmdOptions['filename'];
 
-		if($no_execute)
-		{
-			if($command == 'down')
-			{
-				foreach($files as $file_name)
-				{
-					$vmig->disprove_migration($file_name);
-				}
-			}
-			else
-			{
-				$vmig->approve_migration($files);
-			}
-			break;
-		}
+        if (!count($files)) {
+            throw new Error('Migration name is not specified');
+        }
 
-		if($is_from_file && $is_from_db)
-			throw new Exception_ParseError('Options --from-file and --from-db cannot be used at the same time');
+        if ($noExecute) {
+            if ($command == 'down') {
+                foreach ($files as $filename) {
+                    $vmig->disproveMigration($filename);
+                }
+            } else {
+                $vmig->approveMigration($files);
+            }
+            break;
+        }
 
-		$source = null;
-		if($is_from_file)
-			$source = 'from-file';
-		if($is_from_db)
-			$source = 'from-db';
+        if ($isFromFile && $isFromDb) {
+            throw new Exception_ParseError('Options --from-file and --from-db cannot be used at the same time');
+        }
 
-		foreach($files as $arg)
-		{
-			$vmig->apply_one_migration($arg, $command, $source);
-		}
-		break;
+        $source = null;
+        if ($isFromFile) {
+            $source = 'from-file';
+        }
+        if ($isFromDb) {
+            $source = 'from-db';
+        }
 
-	// Cliff makes sure there is a valid command
+        foreach ($files as $arg) {
+            $vmig->applyOneMigration($arg, $command, $source);
+        }
+        break;
+
+    // Cliff makes sure there is a valid command
 }
 
 exit(EXIT_OK);

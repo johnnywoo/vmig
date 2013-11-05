@@ -1,773 +1,748 @@
-<?
+<?php
 
-class Vmig_SchemesDiff
+namespace Vmig;
+
+class SchemesDiff
 {
-	private $_diff_data;
-	private $_db_name;
+    private $diffData;
+    private $dbName;
 
 
-	public function __construct($scheme1, $scheme2, $db_name, $tables = array())
-	{
-		$this->_db_name = $db_name;
-		$this->_create_diff($scheme1, $scheme2, $tables);
-	}
+    public function __construct($scheme1, $scheme2, $dbName, $tables = array())
+    {
+        $this->dbName = $dbName;
+        $this->createDiff($scheme1, $scheme2, $tables);
+    }
 
 
-	public function get_data()
-	{
-		return $this->_diff_data;
-	}
+    public function getData()
+    {
+        return $this->diffData;
+    }
 
 
-	public function render_migration()
-	{
-		$migration = array(
-			'add_triggers'      => array(),
-			'drop_triggers'     => array(),
-			'add_foreign_keys'  => array(),
-			'drop_foreign_keys' => array(),
-			'add_views'         => array(),
-			'drop_views'        => array(),
-			'alter_views'       => array(),
-			'add_tables'        => array(),
-			'drop_tables'       => array(),
-			'alter_tables'      => array(),
-		);
+    public function renderMigration()
+    {
+        $migration = array(
+            'add_triggers'      => array(),
+            'drop_triggers'     => array(),
+            'add_foreign_keys'  => array(),
+            'drop_foreign_keys' => array(),
+            'add_views'         => array(),
+            'drop_views'        => array(),
+            'alter_views'       => array(),
+            'add_tables'        => array(),
+            'drop_tables'       => array(),
+            'alter_tables'      => array(),
+        );
 
-		foreach($this->_diff_data as $change_name => $changes)
-		{
-			foreach($changes as $db_action_name => $db_action)
-			{
-				switch($change_name)
-				{
-					case 'add_tables':
-						$migration['add_tables'][] = $this->_m_create_table($db_action);
-						break;
-					case 'drop_tables':
-						$migration['drop_tables'][] = $this->_m_drop_table($db_action);
-						break;
-					case 'alter_tables':
-						$migration['alter_tables'][] = $this->_m_alter_table($db_action_name, $db_action);
-						break;
-					case 'add_keys':
-						$migration['add_foreign_keys'][] = $this->_m_add_foreign_key($db_action['index'], $db_action['table_name']);
-						break;
-					case 'drop_keys':
-						$migration['drop_foreign_keys'][] = $this->_m_drop_foreign_key($db_action['index'], $db_action['table_name']);
-						break;
-					case 'modify_keys':
-						$migration['drop_foreign_keys'][] = $this->_m_drop_foreign_key($db_action['old'], $db_action['table_name']);
-						$migration['add_foreign_keys'][]  = $this->_m_add_foreign_key($db_action['new'], $db_action['table_name']);
-						break;
-					case 'add_triggers':
-						$migration['add_triggers'][] = $this->_m_add_trigger($db_action['trigger']);
-						break;
-					case 'drop_triggers':
-						$migration['drop_triggers'][] = $this->_m_drop_trigger($db_action_name);
-						break;
-					case 'modify_triggers':
-						$migration['drop_triggers'][] = $this->_m_drop_trigger($db_action_name);
-						$migration['add_triggers'][]  = $this->_m_add_trigger($db_action['new']);
-						break;
-					case 'add_views':
-						$migration['add_views'][] = $this->_m_add_view($db_action_name, $db_action);
-						break;
-					case 'alter_views':
-						$migration['alter_views'][] = $this->_m_alter_view($db_action_name, $db_action);
-						break;
-					case 'drop_views':
-						$migration['drop_views'][] = $this->_m_drop_view($db_action_name);
-						break;
-				}
-			}
-		}
+        foreach ($this->diffData as $changeName => $changes) {
+            foreach ($changes as $dbActionName => $dbAction) {
+                switch ($changeName) {
+                    case 'add_tables':
+                        $migration['add_tables'][] = $this->makeCreateTable($dbAction);
+                        break;
+                    case 'drop_tables':
+                        $migration['drop_tables'][] = $this->makeDropTable($dbAction);
+                        break;
+                    case 'alter_tables':
+                        $migration['alter_tables'][] = $this->makeAlterTable($dbActionName, $dbAction);
+                        break;
+                    case 'add_keys':
+                        $migration['add_foreign_keys'][] = $this->makeAddForeignKey($dbAction['index'], $dbAction['table_name']);
+                        break;
+                    case 'drop_keys':
+                        $migration['drop_foreign_keys'][] = $this->makeDropForeignKey($dbAction['index'], $dbAction['table_name']);
+                        break;
+                    case 'modify_keys':
+                        $migration['drop_foreign_keys'][] = $this->makeDropForeignKey($dbAction['old'], $dbAction['table_name']);
+                        $migration['add_foreign_keys'][]  = $this->makeAddForeignKey($dbAction['new'], $dbAction['table_name']);
+                        break;
+                    case 'add_triggers':
+                        $migration['add_triggers'][] = $this->makeAddTrigger($dbAction['trigger']);
+                        break;
+                    case 'drop_triggers':
+                        $migration['drop_triggers'][] = $this->makeDropTrigger($dbActionName);
+                        break;
+                    case 'modify_triggers':
+                        $migration['drop_triggers'][] = $this->makeDropTrigger($dbActionName);
+                        $migration['add_triggers'][]  = $this->makeAddTrigger($dbAction['new']);
+                        break;
+                    case 'add_views':
+                        $migration['add_views'][] = $this->makeAddView($dbActionName, $dbAction);
+                        break;
+                    case 'alter_views':
+                        $migration['alter_views'][] = $this->makeAlterView($dbActionName, $dbAction);
+                        break;
+                    case 'drop_views':
+                        $migration['drop_views'][] = $this->makeDropView($dbActionName);
+                        break;
+                }
+            }
+        }
 
-		return $migration;
-	}
+        return $migration;
+    }
 
 
-	public function render_status_text($db_name)
-	{
-		$status = '';
+    public function renderStatusText($dbName)
+    {
+        $status = '';
 
-		$diff_data = $this->_diff_data;
-		foreach($diff_data as $change_name => $changes)
-		{
-			if($change_name == 'add_keys' || $change_name == 'drop_keys' || $change_name == 'modify_keys')
-			{
-				foreach($changes as $db_action_name => $db_action)
-				{
-					$diff_data['alter_tables'][$db_action['table_name']][$change_name.'_f'][$db_action_name] = $db_action;
-				}
-				unset($diff_data[$change_name]);
-			}
+        $diffData = $this->diffData;
+        foreach ($diffData as $changeName => $changes) {
+            if ($changeName == 'add_keys' || $changeName == 'drop_keys' || $changeName == 'modify_keys') {
+                foreach ($changes as $dbActionName => $dbAction) {
+                    $diffData['alter_tables'][$dbAction['table_name']][$changeName . '_f'][$dbActionName] = $dbAction;
+                }
+                unset($diffData[$changeName]);
+            }
 
-			if($change_name == 'add_triggers' || $change_name == 'drop_triggers' || $change_name == 'modify_triggers')
-			{
-				foreach($changes as $db_action_name => $db_action)
-				{
-					$diff_data['alter_tables'][$db_action['table_name']][$change_name][$db_action_name] = $db_action;
-				}
-				unset($diff_data[$change_name]);
-			}
-		}
+            if ($changeName == 'add_triggers' || $changeName == 'drop_triggers' || $changeName == 'modify_triggers') {
+                foreach ($changes as $dbActionName => $dbAction) {
+                    $diffData['alter_tables'][$dbAction['table_name']][$changeName][$dbActionName] = $dbAction;
+                }
+                unset($diffData[$changeName]);
+            }
+        }
 
+        foreach ($diffData as $changeName => $changes) {
+            foreach ($changes as $dbActionName => $dbAction) {
+                switch ($changeName) {
+                    case 'add_tables':
+                    case 'add_views':
+                        $act = "%g+";
+                        break;
+                    case 'drop_tables':
+                    case 'drop_views':
+                        $act = "%r-";
+                        break;
+                    default:
+                        $act = "%y~";
+                }
 
-		foreach($diff_data as $change_name => $changes)
-		{
-			foreach($changes as $db_action_name => $db_action)
-			{
-				switch($change_name)
-				{
-					case 'add_tables':
-					case 'add_views':
-						$act = "%g+";
-						break;
-					case 'drop_tables':
-					case 'drop_views':
-						$act = "%r-";
-						break;
-					default:
-						$act = "%y~";
-				}
+                $action = '';
+                if ($changeName == 'add_views' || $changeName == 'drop_views' || $changeName == 'alter_views') {
+                    $action = '(view)';
+                }
 
-				$_action = '';
-				if($change_name == 'add_views' || $change_name == 'drop_views' || $change_name == 'alter_views')
-					$_action = '(view)';
+                $status .= "\n {$act} {$dbName}.{$dbActionName} {$action}%n\n";
 
-				$status .= "\n {$act} {$db_name}.{$db_action_name} {$_action}%n\n";
+                if ($changeName == 'alter_tables') {
+                    $status .= $this->generateStatusTextForAlterTables($dbAction);
+                }
+            }
+        }
 
-				if($change_name == 'alter_tables')
-					$status .= $this->_generate_status_text_for_alter_tables($db_action);
-			}
-		}
-
-		return $status;
-	}
+        return $status;
+    }
 
 
-	private function _generate_status_for_trigger($change_name, $db_action)
-	{
-		if($change_name != 'modify_triggers')
-			return '(' . $this->_trigger_summary($db_action['trigger']) . ')';
+    private function generateStatusForTrigger($changeName, $dbAction)
+    {
+        if ($changeName != 'modify_triggers') {
+            return '(' . $this->triggerSummary($dbAction['trigger']) . ')';
+        }
 
-		$new_summary = $this->_trigger_summary($db_action['new']);
-		$old_summary = $this->_trigger_summary($db_action['old']);
-		if($new_summary != $old_summary)
-			return "({$new_summary}) -- was ({$old_summary})";
+        $newSummary = $this->triggerSummary($dbAction['new']);
+        $oldSummary = $this->triggerSummary($dbAction['old']);
+        if ($newSummary != $oldSummary) {
+            return "({$newSummary}) -- was ({$oldSummary})";
+        }
 
-		return "({$new_summary})";
-	}
+        return "({$newSummary})";
+    }
 
-	private function _trigger_summary($sql)
-	{
-		if(preg_match('/^ \s* CREATE \s+ TRIGGER \s+ \S+ \s+ (\S+) \s+ (\S+) \s+ ON/six', $sql, $m))
-			return strtolower($m[1] . ' ' . $m[2]);
-		return '???';
-	}
+    private function triggerSummary($sql)
+    {
+        if (preg_match('/^ \s* CREATE \s+ TRIGGER \s+ \S+ \s+ (\S+) \s+ (\S+) \s+ ON/six', $sql, $m)) {
+            return strtolower($m[1] . ' ' . $m[2]);
+        }
+        return '???';
+    }
 
-	private function _generate_status_text_for_alter_tables($db_action)
-	{
-		$status = '';
-		foreach($db_action as $table_change_name => $table_changes)
-		{
-			switch($table_change_name)
-			{
-				case 'add_field':
-				case 'add_key':
-				case 'add_keys_f':
-				case 'add_triggers':
-					$act = "%g+";
-					break;
-				case 'drop_field':
-				case 'drop_key':
-				case 'drop_keys_f':
-				case 'drop_triggers':
-					$act = "%r-";
-					break;
-				default:
-					$act = "%y~";
-			}
-			foreach($table_changes as $action_name => $action)
-			{
-				$_action = null;
+    private function generateStatusTextForAlterTables($dbAction)
+    {
+        $status = '';
+        foreach ($dbAction as $tableChangeName => $tableChanges) {
+            switch ($tableChangeName) {
+                case 'add_field':
+                case 'add_key':
+                case 'add_keys_f':
+                case 'add_triggers':
+                    $act = "%g+";
+                    break;
+                case 'drop_field':
+                case 'drop_key':
+                case 'drop_keys_f':
+                case 'drop_triggers':
+                    $act = "%r-";
+                    break;
+                default:
+                    $act = "%y~";
+            }
+            foreach ($tableChanges as $actionName => $action) {
+                $actionDesc = null;
 
-				if(is_string($action))
-					$_action = $action;
+                if (is_string($action)) {
+                    $actionDesc = $action;
+                }
 
-				if($table_change_name == 'modify_field')
-					$_action = $action['new'] . ' -- was ' . $action['old'];
+                if ($tableChangeName == 'modify_field') {
+                    $actionDesc = $action['new'] . ' -- was ' . $action['old'];
+                }
 
-				if($table_change_name == 'modify_key')
-				{
-					$action_name = 'KEY ' . $action_name;
-					$_action = '(' . $action['new']['fields'] . ') -- was (' . $action['old']['fields'] . ')';
-				}
+                if ($tableChangeName == 'modify_key') {
+                    $actionName = 'KEY ' . $actionName;
+                    $actionDesc = '(' . $action['new']['fields'] . ') -- was (' . $action['old']['fields'] . ')';
+                }
 
-				if($table_change_name == 'add_key' || $table_change_name == 'drop_key')
-				{
-					if($action_name == 'PRIMARY')
-						$action_name .= ' KEY';
-					else
-						$action_name = 'KEY ' . $action_name;
-					$_action = "({$action['fields']})";
-				}
+                if ($tableChangeName == 'add_key' || $tableChangeName == 'drop_key') {
+                    if ($actionName == 'PRIMARY') {
+                        $actionName .= ' KEY';
+                    } else {
+                        $actionName = 'KEY ' . $actionName;
+                    }
+                    $actionDesc = "({$action['fields']})";
+                }
 
-				if($table_change_name == 'add_keys_f' || $table_change_name == 'drop_keys_f')
-					$_action = $action['index']['props'];
+                if ($tableChangeName == 'add_keys_f' || $tableChangeName == 'drop_keys_f') {
+                    $actionDesc = $action['index']['props'];
+                }
 
-				if($table_change_name == 'modify_keys_f')
-				{
-					$action_name = 'KEY ' . $action_name;
-					$_action = '(' . $action['new']['props'] . ') -- was (' . $action['old']['props'] . ')';
-				}
+                if ($tableChangeName == 'modify_keys_f') {
+                    $actionName = 'KEY ' . $actionName;
+                    $actionDesc = '(' . $action['new']['props'] . ') -- was (' . $action['old']['props'] . ')';
+                }
 
-				if(in_array($table_change_name, array('add_triggers', 'drop_triggers', 'modify_triggers')))
-				{
-					$action_name = 'TRIGGER ' . $action_name;
-					$_action = $this->_generate_status_for_trigger($table_change_name, $action);
-				}
+                if (in_array($tableChangeName, array('add_triggers', 'drop_triggers', 'modify_triggers'))) {
+                    $actionName = 'TRIGGER ' . $actionName;
+                    $actionDesc = $this->generateStatusForTrigger($tableChangeName, $action);
+                }
 
-				if(is_null($_action))
-					throw new Vmig_Error('Unknown change type "'.$table_change_name.'"');
+                if ($actionDesc === null) {
+                    throw new Error('Unknown change type "' . $tableChangeName . '"');
+                }
 
-				$status .= $this->fix_carriage_returns("    {$act} {$action_name}%n {$_action}\n");
-			}
-		}
+                $status .= $this->fixCarriageReturns("    {$act} {$actionName}%n {$actionDesc}\n");
+            }
+        }
 
-		return $status;
-	}
+        return $status;
+    }
 
-	private function fix_carriage_returns($text)
-	{
-		return str_replace("\r", '%r\\r%n', $text);
-	}
+    private function fixCarriageReturns($text)
+    {
+        return str_replace("\r", '%r\\r%n', $text);
+    }
 
 
-	/**
-	 * @param Vmig_Scheme $scheme1
-	 * @param Vmig_Scheme $scheme2
-	 * @param array $tables
-	 */
-	private function _create_diff(Vmig_Scheme $scheme1, Vmig_Scheme $scheme2, $tables = array())
-	{
-		$scheme1_data = $scheme1->get_data();
-		$scheme2_data = $scheme2->get_data();
+    /**
+     * @param Scheme $scheme1
+     * @param Scheme $scheme2
+     * @param array $tables
+     */
+    private function createDiff(Scheme $scheme1, Scheme $scheme2, $tables = array())
+    {
+        $scheme1Data = $scheme1->getData();
+        $scheme2Data = $scheme2->getData();
 
-		$this->_diff_data = array();
+        $this->diffData = array();
 
-		$changes = array(
-			'add_tables'      => array(),
-			'alter_tables'    => array(),
-			'drop_tables'     => array(),
-			'add_views'       => array(),
-			'drop_views'      => array(),
-			'alter_views'     => array(),
-			'drop_keys'       => array(),
-			'add_keys'        => array(),
-			'modify_keys'     => array(),
-			'drop_triggers'   => array(),
-			'add_triggers'    => array(),
-			'modify_triggers' => array(),
-		);
+        $changes = array(
+            'add_tables'      => array(),
+            'alter_tables'    => array(),
+            'drop_tables'     => array(),
+            'add_views'       => array(),
+            'drop_views'      => array(),
+            'alter_views'     => array(),
+            'drop_keys'       => array(),
+            'add_keys'        => array(),
+            'modify_keys'     => array(),
+            'drop_triggers'   => array(),
+            'add_triggers'    => array(),
+            'modify_triggers' => array(),
+        );
 
-		foreach($scheme2_data['tables'] as $table_name => $table)
-		{
-            if(sizeof($tables) && !in_array($table_name, $tables))
+        foreach ($scheme2Data['tables'] as $tableName => $table) {
+            if (sizeof($tables) && !in_array($tableName, $tables)) {
                 continue;
+            }
 
-			if(!key_exists($table_name, $scheme1_data['tables']))
-				$changes['drop_tables'][$table_name] = $table;
+            if (!array_key_exists($tableName, $scheme1Data['tables'])) {
+                $changes['drop_tables'][$tableName] = $table;
+            }
 
-			foreach($table['foreign_keys'] as $index_name => $index)
-			{
-				if(!isset($scheme1_data['tables'][$table_name]['foreign_keys'][$index_name]))
-				{
-					$changes['drop_keys'][$index_name] = array(
-						'table_name' => $table_name,
-						'index'      => $index,
-					);
-				}
-			}
+            foreach ($table['foreign_keys'] as $indexName => $index) {
+                if (!isset($scheme1Data['tables'][$tableName]['foreign_keys'][$indexName])) {
+                    $changes['drop_keys'][$indexName] = array(
+                        'table_name' => $tableName,
+                        'index'      => $index,
+                    );
+                }
+            }
 
-			foreach($table['triggers'] as $trigger_name => $trigger_sql)
-			{
-				if(!isset($scheme1_data['tables'][$table_name]['triggers'][$trigger_name]))
-				{
-					$changes['drop_triggers'][$trigger_name] = array(
-						'table_name' => $table_name,
-						'trigger'    => $trigger_sql,
-					);
-				}
-			}
-		}
+            foreach ($table['triggers'] as $triggerName => $triggerSql) {
+                if (!isset($scheme1Data['tables'][$tableName]['triggers'][$triggerName])) {
+                    $changes['drop_triggers'][$triggerName] = array(
+                        'table_name' => $tableName,
+                        'trigger'    => $triggerSql,
+                    );
+                }
+            }
+        }
 
-		foreach($scheme1_data['tables'] as $table_name => $table)
-		{
-            if(sizeof($tables) && !in_array($table_name, $tables))
+        foreach ($scheme1Data['tables'] as $tableName => $table) {
+            if (sizeof($tables) && !in_array($tableName, $tables)) {
                 continue;
-
-			if(!key_exists($table_name, $scheme2_data['tables']))
-			{
-				$changes['add_tables'][$table_name] = $table;
-			}
-			else if($table !== $scheme2_data['tables'][$table_name])
-			{
-				$table_changes = $this->_diff_tables($table, $scheme2_data['tables'][$table_name]);
-				if($table_changes)
-					$changes['alter_tables'][$table_name] = $table_changes;
-			}
-
-			foreach($table['foreign_keys'] as $index_name => $index)
-			{
-				$fks =& $scheme2_data['tables'][$table_name]['foreign_keys']; // ref to avoid notices
-				if(!isset($fks[$index_name]))
-				{
-					$changes['add_keys'][$index_name] = array(
-						'table_name' => $table_name,
-						'index'      => $index,
-					);
-				}
-				else if($index != $fks[$index_name])
-				{
-					$changes['modify_keys'][$index_name] = array(
-						'table_name' => $table_name,
-						'old'        => $fks[$index_name],
-						'new'        => $index,
-					);
-				}
-			}
-
-			foreach($table['triggers'] as $trigger_name => $trigger_sql)
-			{
-				$triggers =& $scheme2_data['tables'][$table_name]['triggers']; // ref to avoid notices
-				if(!isset($triggers[$trigger_name]))
-				{
-					$changes['add_triggers'][$trigger_name] = array(
-						'table_name' => $table_name,
-						'trigger'    => $trigger_sql,
-					);
-				}
-				else if($trigger_sql != $triggers[$trigger_name])
-				{
-					$changes['modify_triggers'][$trigger_name] = array(
-						'table_name' => $table_name,
-						'old'        => $triggers[$trigger_name],
-						'new'        => $trigger_sql,
-					);
-				}
-			}
-		}
-
-		foreach($scheme2_data['views'] as $view_name => $view)
-		{
-			if(!key_exists($view_name, $scheme1_data['views']))
-				$changes['drop_views'][$view_name] = $view;
-		}
-
-		foreach($scheme1_data['views'] as $view_name => $view)
-		{
-			if(!key_exists($view_name, $scheme2_data['views']))
-			{
-				$changes['add_views'][$view_name] = $view;
-			}
-			else if($view != $scheme2_data['views'][$view_name])
-			{
-				$changes['alter_views'][$view_name] = array(
-					'old' => $scheme2_data['views'][$view_name],
-					'new' => $view,
-				);
-			}
-		}
-
-		$this->_diff_data = $changes;
-	}
-
-
-	private function _diff_tables($table1, $table2)
-	{
-		$changes = array(
-			'add_field'    => array(),
-			'drop_field'   => array(),
-			'modify_field' => array(),
-			'add_key'      => array(),
-			'drop_key'     => array(),
-			'modify_key'   => array(),
-			'props'        => array(),
-		);
-		$empty_changes = $changes;
-
-		foreach($table2['fields'] as $name => $field_props)
-		{
-			if(!key_exists($name, $table1['fields']))
-				$changes['drop_field'][$name] = $field_props;
-		}
-
-		$prev_field = null;
-		foreach($table1['fields'] as $name => $field_props)
-		{
-			$add_props = ' FIRST';
-			if($prev_field)
-				$add_props = " AFTER `{$prev_field}`";
-
-			if(!key_exists($name, $table2['fields']))
-			{
-				$changes['add_field'][$name] = $field_props . $add_props;
-			}
-			else if(strcasecmp($field_props, $table2['fields'][$name]) != 0)
-			{
-				$changes['modify_field'][$name] = array(
-					'old' => $table2['fields'][$name],
-					'new' => $field_props,
-				);
-			}
-			$prev_field = $name;
-		}
-
-		foreach($table2['keys'] as $index_name => $index)
-		{
-			if(!key_exists($index_name, $table1['keys']))
-				$changes['drop_key'][$index_name] = $index;
-		}
-
-		foreach($table1['keys'] as $index_name => $index)
-		{
-			if(!key_exists($index_name, $table2['keys']))
-			{
-				$changes['add_key'][$index_name] = $index;
-			}
-			else if($index != $table2['keys'][$index_name])
-			{
-				$changes['modify_key'][$index_name] = array(
-					'old' => $table2['keys'][$index_name],
-					'new' => $index,
-				);
-			}
-		}
-
-		if($table1['props'] != $table2['props'])
-			$changes['props'] = array(
-				'old' => $table2['props'],
-				'new' => $table1['props'],
-			);
-
-		$changes = $this->_check_fields_positions($table1, $table2, $changes);
-
-		if($changes === $empty_changes)
-			$changes = false;
-		return $changes;
-	}
-
-
-	private function _check_fields_positions($table1, $table2, $changes)
-	{
-		$pos = 1;
-		$table1_pos = array();
-		foreach($table1['fields'] as $field_name => $field_props)
-		{
-			$table1_pos[$field_name] = $pos;
-			$pos++;
-		}
-
-		$table2_pos = array();
-		$table2_with_pos = array();
-		$table1_prev_fields = array();
-		$prev_field = null;
-		foreach($table2['fields'] as $field_name => $field_props)
-		{
-			$table1_prev_fields[$field_name] = $prev_field;
-			$prev_field = $field_name;
-
-			if(!key_exists($field_name, $table1_pos))
-				continue;
-
-			$table2_with_pos[$table1_pos[$field_name]] = array(
-				'field_name'  => $field_name,
-				'field_props' => $field_props,
-			);
-
-			$table2_pos[] = $table1_pos[$field_name];
-		}
-
-		$sequence = $this->_find_longest_sequence($table2_pos);
-		$sequence[99999] = 99999;
-
-		foreach($table2_with_pos as $pos => $field)
-		{
-			if(in_array($pos, $sequence))
-				continue;
-
-			$prev_pos = -1;
-			foreach($sequence as $s_pos)
-			{
-				if($pos < $s_pos)
-				{
-					$field_name = $table2_with_pos[$pos]['field_name'];
-
-					$add_props = ' FIRST';
-					if($prev_pos != -1)
-						$add_props = " AFTER `{$table2_with_pos[$prev_pos]['field_name']}`";
-
-					$old_props = ' FIRST';
-					if(key_exists($field_name, $table1_prev_fields) && $table1_prev_fields[$field_name] != null)
-					{
-						$old_props = " AFTER `{$table1_prev_fields[$field_name]}`";
-					}
-
-					$changes['modify_field'][$field_name] = array(
-						'old' => "{$table1['fields'][$field_name]}{$old_props}",
-						'new' => "{$table2['fields'][$field_name]}{$add_props}",
-					);
-					$sequence[] = $pos;
-					sort($sequence);
-					break;
-				}
-				$prev_pos = $s_pos;
-			}
-		}
-
-		return $changes;
-	}
-
-
-	private function _find_longest_sequence($arr)
-	{
-		$all_sequences = array();
-
-		foreach($arr as $key => $value)
-		{
-			$count = 0;
-			$count2 = 0;
-			for($i = 0; $i < count($arr); $i++)
-			{
-				if($arr[$i] < $value && $i < $key)
-					$count++;
-				if($arr[$i] > $value && $i > $key)
-					$count2++;
-			}
-			if($count2 > $count)
-				$count = $count2;
-
-			foreach($all_sequences as &$sequence)
-			{
-				if($value > $sequence[count($sequence)-1])
-				{
-					$sequence[] = $value;
-					$count--;
-				}
-
-				if($count <= 0)
-					break;
-			}
-
-			while($count > 0)
-			{
-				$all_sequences[] = array($value);
-				$count--;
-			}
-		}
-
-		$max_sequence = array();
-		$max_length = 0;
-		foreach($all_sequences as $sequence)
-		{
-			$curr_sequence = count($sequence);
-			if($curr_sequence > $max_length)
-			{
-				$max_length = $curr_sequence;
-				$max_sequence = $sequence;
-			}
-		}
-
-		if(empty($max_sequence))
-			$max_sequence = array($arr[0]);
-
-		return $max_sequence;
-	}
-
-
-	private function _m_create_table($table)
-	{
-		$table_name = $table['name'];
-		$lines = array();
-
-		foreach($table['fields'] as $field_name => $field_props)
-		{
-			$lines[] = "  {$field_name} {$field_props}";
-		}
-
-		foreach($table['keys'] as $index_name => $index)
-		{
-			if($index_name == 'PRIMARY')
-				$lines[] = "  PRIMARY KEY ({$index['fields']})";
-			else if(!empty($index['unique']))
-				$lines[] = "  UNIQUE KEY `{$index_name}` ({$index['fields']})";
-			else
-				$lines[] = "  KEY `{$index_name}` ({$index['fields']})";
-		}
-
-		$migration = "CREATE TABLE `{$this->_db_name}`.`{$table_name}` (\n";
-		$migration .= join(",\n", $lines) . "\n";
-		$migration .= ") {$table['props']};\n\n";
-
-		return $migration;
-	}
-
-
-	private function _m_drop_table($table)
-	{
-		$table_name = $table['name'];
-		$migration = "DROP TABLE `{$this->_db_name}`.`{$table_name}`;\n\n";
-		return $migration;
-	}
-
-
-	private function _m_alter_table($table_name, $table_changes)
-	{
-		$migration = array();
-
-		foreach($table_changes as $change_name => $changes)
-		{
-			if(!is_array($changes))
-				continue;
-			elseif($change_name == 'props')
-			{
-				/*
-				 * change 'props' applies to table, not to field. So it looks like:
-				 * 	array(
-				 * 		'old'=>'...',
-				 * 		'new'=>'...'
-				 * 	),
-				 *
-				 * rather than field change:
-				 * 	array(
-				 * 		'field_name' => array(
-				 * 			'old'=>'...',
-				 * 			'new'=>'...'
-				 * 		)
-				 * 	)
-				 */
-				if(array_key_exists('new', $changes)) // 'props' can be array(array 'old', array 'new'), or an empty array.
-					$migration[] = $changes['new'];
-				continue;
-			}
-
-			foreach($changes as $field_name => $field_props)
-			{
-				switch($change_name)
-				{
-					case 'add_field':
-						$migration[] = "ADD COLUMN `{$field_name}` {$field_props}";
-						break;
-					case 'drop_field':
-						$migration[] = "DROP COLUMN `{$field_name}`";
-						break;
-					case 'modify_field':
-						$migration[] = "MODIFY `{$field_name}` {$field_props['new']}";
-						break;
-					case 'add_key':
-						$migration[] = $this->_m_add_key($field_props, $table_name);
-						break;
-					case 'drop_key':
-						$migration[] = $this->_m_drop_key($field_props, $table_name);
-						break;
-					case 'modify_key':
-						$migration[] = $this->_m_drop_key($field_props['old'], $table_name);
-						$migration[] = $this->_m_add_key($field_props['new'], $table_name);
-						break;
-				}
-			}
-		}
-
-		if($migration)
-			return "ALTER TABLE `{$this->_db_name}`.`{$table_name}`\n  " . implode(",\n  ", $migration) . ";\n\n";
-
-		return false;
-	}
-
-
-	private function _m_drop_key($index, $table_name)
-	{
-		if($index['name'] == 'PRIMARY')
-			$migration = "DROP PRIMARY KEY";
-		else
-			$migration = "DROP INDEX `{$index['name']}`";
-
-		return $migration;
-	}
-
-
-	private function _m_add_key($index, $table_name)
-	{
-		if($index['name'] == 'PRIMARY')
-			$migration = "ADD PRIMARY KEY ({$index['fields']})";
-		else if($index['unique'])
-			$migration = "ADD UNIQUE `{$index['name']}` ({$index['fields']})";
-		else
-			$migration = "ADD INDEX `{$index['name']}` ({$index['fields']})";
-
-		return $migration;
-	}
-
-
-	private function _m_add_foreign_key($index, $table_name)
-	{
-		return "ALTER TABLE `{$this->_db_name}`.`{$table_name}` ADD CONSTRAINT `{$index['name']}` {$index['props']};\n";
-	}
-
-
-	private function _m_drop_foreign_key($index, $table_name)
-	{
-		return "ALTER TABLE `{$this->_db_name}`.`{$table_name}` DROP FOREIGN KEY `{$index['name']}`;\n";
-	}
-
-
-	const SQL_DELIMITER = ';';
-	private function _m_add_trigger($trigger_sql)
-	{
-		$delimiter = static::SQL_DELIMITER;
-		while(strpos($trigger_sql, $delimiter) !== false)
-		{
-			$delimiter .= static::SQL_DELIMITER;
-		}
-
-		$sql = "USE `{$this->_db_name}`;\n";
-		// ; is a default delimiter in MySQL
-		// so if the trigger is one statement only, we can have less noise in the migration
-		if($delimiter != ';')
-			$sql .= "DELIMITER {$delimiter}\n";
-		$sql .= "{$trigger_sql}{$delimiter}\n";
-		if($delimiter != ';')
-			$sql .= "DELIMITER ;\n";
-		$sql .= "\n";
-		return $sql;
-	}
-
-
-	private function _m_drop_trigger($trigger_name)
-	{
-		return "DROP TRIGGER `{$this->_db_name}`.`{$trigger_name}`;\n\n";
-	}
-
-
-	private function _m_drop_view($view_name)
-	{
-		return "DROP VIEW `{$this->_db_name}`.`{$view_name}`;\n";
-	}
-
-
-	private function _m_add_view($view_name, $view)
-	{
-		// View declaration may contain table references inside (view x as select * from table).
-		// Those references may omit database name, so we need to set default DB here.
-		return "USE `{$this->_db_name}`;\n".
-			"CREATE VIEW `{$this->_db_name}`.`{$view_name}` {$view};\n";
-	}
-
-
-	private function _m_alter_view($view_name, $view)
-	{
-		return "USE `{$this->_db_name}`;\n".
-			"ALTER VIEW `{$this->_db_name}`.`{$view_name}` {$view['new']};\n";
-	}
+            }
+
+            if (!array_key_exists($tableName, $scheme2Data['tables'])) {
+                $changes['add_tables'][$tableName] = $table;
+            } else if ($table !== $scheme2Data['tables'][$tableName]) {
+                $tableChanges = $this->diffTables($table, $scheme2Data['tables'][$tableName]);
+                if ($tableChanges) {
+                    $changes['alter_tables'][$tableName] = $tableChanges;
+                }
+            }
+
+            foreach ($table['foreign_keys'] as $indexName => $index) {
+                $fks =& $scheme2Data['tables'][$tableName]['foreign_keys']; // ref to avoid notices
+                if (!isset($fks[$indexName])) {
+                    $changes['add_keys'][$indexName] = array(
+                        'table_name' => $tableName,
+                        'index'      => $index,
+                    );
+                } else if ($index != $fks[$indexName]) {
+                    $changes['modify_keys'][$indexName] = array(
+                        'table_name' => $tableName,
+                        'old'        => $fks[$indexName],
+                        'new'        => $index,
+                    );
+                }
+            }
+
+            foreach ($table['triggers'] as $triggerName => $triggerSql) {
+                $triggers =& $scheme2Data['tables'][$tableName]['triggers']; // ref to avoid notices
+                if (!isset($triggers[$triggerName])) {
+                    $changes['add_triggers'][$triggerName] = array(
+                        'table_name' => $tableName,
+                        'trigger'    => $triggerSql,
+                    );
+                } else if ($triggerSql != $triggers[$triggerName]) {
+                    $changes['modify_triggers'][$triggerName] = array(
+                        'table_name' => $tableName,
+                        'old'        => $triggers[$triggerName],
+                        'new'        => $triggerSql,
+                    );
+                }
+            }
+        }
+
+        foreach ($scheme2Data['views'] as $viewName => $view) {
+            if (!array_key_exists($viewName, $scheme1Data['views'])) {
+                $changes['drop_views'][$viewName] = $view;
+            }
+        }
+
+        foreach ($scheme1Data['views'] as $viewName => $view) {
+            if (!array_key_exists($viewName, $scheme2Data['views'])) {
+                $changes['add_views'][$viewName] = $view;
+            } else if ($view != $scheme2Data['views'][$viewName]) {
+                $changes['alter_views'][$viewName] = array(
+                    'old' => $scheme2Data['views'][$viewName],
+                    'new' => $view,
+                );
+            }
+        }
+
+        $this->diffData = $changes;
+    }
+
+
+    private function diffTables($table1, $table2)
+    {
+        $changes = array(
+            'add_field'    => array(),
+            'drop_field'   => array(),
+            'modify_field' => array(),
+            'add_key'      => array(),
+            'drop_key'     => array(),
+            'modify_key'   => array(),
+            'props'        => array(),
+        );
+
+        $emptyChanges = $changes;
+
+        foreach ($table2['fields'] as $name => $fieldProps) {
+            if (!array_key_exists($name, $table1['fields'])) {
+                $changes['drop_field'][$name] = $fieldProps;
+            }
+        }
+
+        $prevField = null;
+        foreach ($table1['fields'] as $name => $fieldProps) {
+            $addProps = ' FIRST';
+            if ($prevField) {
+                $addProps = " AFTER `{$prevField}`";
+            }
+
+            if (!array_key_exists($name, $table2['fields'])) {
+                $changes['add_field'][$name] = $fieldProps . $addProps;
+            } else if (strcasecmp($fieldProps, $table2['fields'][$name]) != 0) {
+                $changes['modify_field'][$name] = array(
+                    'old' => $table2['fields'][$name],
+                    'new' => $fieldProps,
+                );
+            }
+            $prevField = $name;
+        }
+
+        foreach ($table2['keys'] as $indexName => $index) {
+            if (!array_key_exists($indexName, $table1['keys'])) {
+                $changes['drop_key'][$indexName] = $index;
+            }
+        }
+
+        foreach ($table1['keys'] as $indexName => $index) {
+            if (!array_key_exists($indexName, $table2['keys'])) {
+                $changes['add_key'][$indexName] = $index;
+            } else if ($index != $table2['keys'][$indexName]) {
+                $changes['modify_key'][$indexName] = array(
+                    'old' => $table2['keys'][$indexName],
+                    'new' => $index,
+                );
+            }
+        }
+
+        if ($table1['props'] != $table2['props']) {
+            $changes['props'] = array(
+                'old' => $table2['props'],
+                'new' => $table1['props'],
+            );
+        }
+
+        $changes = $this->checkFieldsPositions($table1, $table2, $changes);
+
+        if ($changes === $emptyChanges) {
+            $changes = false;
+        }
+        return $changes;
+    }
+
+
+    private function checkFieldsPositions($table1, $table2, $changes)
+    {
+        $pos       = 1;
+        $table1Pos = array();
+        foreach ($table1['fields'] as $fieldName => $fieldProps) {
+            $table1Pos[$fieldName] = $pos;
+            $pos++;
+        }
+
+        $table2Pos        = array();
+        $table2WithPos    = array();
+        $table1PrevFields = array();
+        $prevField        = null;
+        foreach ($table2['fields'] as $fieldName => $fieldProps) {
+            $table1PrevFields[$fieldName] = $prevField;
+
+            $prevField = $fieldName;
+
+            if (!array_key_exists($fieldName, $table1Pos)) {
+                continue;
+            }
+
+            $table2WithPos[$table1Pos[$fieldName]] = array(
+                'field_name'  => $fieldName,
+                'field_props' => $fieldProps,
+            );
+
+            $table2Pos[] = $table1Pos[$fieldName];
+        }
+
+        $sequence = $this->findLongestSequence($table2Pos);
+        $sequence[99999] = 99999;
+
+        foreach ($table2WithPos as $pos => $field) {
+            if (in_array($pos, $sequence)) {
+                continue;
+            }
+
+            $prevPos = -1;
+            foreach ($sequence as $sPos) {
+                if ($pos < $sPos) {
+                    $fieldName = $table2WithPos[$pos]['field_name'];
+
+                    $addProps = ' FIRST';
+                    if ($prevPos != -1) {
+                        $addProps = " AFTER `{$table2WithPos[$prevPos]['field_name']}`";
+                    }
+
+                    $oldProps = ' FIRST';
+                    if (array_key_exists($fieldName, $table1PrevFields) && $table1PrevFields[$fieldName] != null) {
+                        $oldProps = " AFTER `{$table1PrevFields[$fieldName]}`";
+                    }
+
+                    $changes['modify_field'][$fieldName] = array(
+                        'old' => "{$table1['fields'][$fieldName]}{$oldProps}",
+                        'new' => "{$table2['fields'][$fieldName]}{$addProps}",
+                    );
+
+                    $sequence[] = $pos;
+                    sort($sequence);
+                    break;
+                }
+                $prevPos = $sPos;
+            }
+        }
+
+        return $changes;
+    }
+
+
+    private function findLongestSequence($arr)
+    {
+        $allSequences = array();
+
+        foreach ($arr as $key => $value) {
+            $count  = 0;
+            $count2 = 0;
+            for ($i = 0; $i < count($arr); $i++) {
+                if ($arr[$i] < $value && $i < $key) {
+                    $count++;
+                }
+                if ($arr[$i] > $value && $i > $key) {
+                    $count2++;
+                }
+            }
+            if ($count2 > $count) {
+                $count = $count2;
+            }
+
+            foreach ($allSequences as &$sequence) {
+                if ($value > $sequence[count($sequence) - 1]) {
+                    $sequence[] = $value;
+                    $count--;
+                }
+
+                if ($count <= 0) {
+                    break;
+                }
+            }
+
+            while ($count > 0) {
+                $allSequences[] = array($value);
+                $count--;
+            }
+        }
+
+        $maxSequence = array();
+        $maxLength   = 0;
+        foreach ($allSequences as $sequence) {
+            $currSequence = count($sequence);
+            if ($currSequence > $maxLength) {
+                $maxLength   = $currSequence;
+                $maxSequence = $sequence;
+            }
+        }
+
+        if (empty($maxSequence)) {
+            $maxSequence = array($arr[0]);
+        }
+
+        return $maxSequence;
+    }
+
+
+    private function makeCreateTable($table)
+    {
+        $tableName = $table['name'];
+        $lines     = array();
+
+        foreach ($table['fields'] as $fieldName => $fieldProps) {
+            $lines[] = "  {$fieldName} {$fieldProps}";
+        }
+
+        foreach ($table['keys'] as $indexName => $index) {
+            if ($indexName == 'PRIMARY') {
+                $lines[] = "  PRIMARY KEY ({$index['fields']})";
+            } else if (!empty($index['unique'])) {
+                $lines[] = "  UNIQUE KEY `{$indexName}` ({$index['fields']})";
+            } else {
+                $lines[] = "  KEY `{$indexName}` ({$index['fields']})";
+            }
+        }
+
+        $migration = "CREATE TABLE `{$this->dbName}`.`{$tableName}` (\n";
+        $migration .= join(",\n", $lines) . "\n";
+        $migration .= ") {$table['props']};\n\n";
+
+        return $migration;
+    }
+
+
+    private function makeDropTable($table)
+    {
+        $tableName = $table['name'];
+        $migration = "DROP TABLE `{$this->dbName}`.`{$tableName}`;\n\n";
+        return $migration;
+    }
+
+
+    private function makeAlterTable($tableName, $tableChanges)
+    {
+        $migration = array();
+
+        foreach ($tableChanges as $changeName => $changes) {
+            if (!is_array($changes)) {
+                continue;
+            }
+
+            if ($changeName == 'props') {
+                /*
+                 * change 'props' applies to table, not to field. So it looks like:
+                 * 	array(
+                 * 		'old'=>'...',
+                 * 		'new'=>'...'
+                 * 	),
+                 *
+                 * rather than field change:
+                 * 	array(
+                 * 		'field_name' => array(
+                 * 			'old'=>'...',
+                 * 			'new'=>'...'
+                 * 		)
+                 * 	)
+                 */
+                if (array_key_exists('new', $changes)) {
+                    // 'props' can be array(array 'old', array 'new'), or an empty array.
+                    $migration[] = $changes['new'];
+                }
+                continue;
+            }
+
+            foreach ($changes as $fieldName => $fieldProps) {
+                switch ($changeName) {
+                    case 'add_field':
+                        $migration[] = "ADD COLUMN `{$fieldName}` {$fieldProps}";
+                        break;
+                    case 'drop_field':
+                        $migration[] = "DROP COLUMN `{$fieldName}`";
+                        break;
+                    case 'modify_field':
+                        $migration[] = "MODIFY `{$fieldName}` {$fieldProps['new']}";
+                        break;
+                    case 'add_key':
+                        $migration[] = $this->makeAddKey($fieldProps, $tableName);
+                        break;
+                    case 'drop_key':
+                        $migration[] = $this->makeDropKey($fieldProps, $tableName);
+                        break;
+                    case 'modify_key':
+                        $migration[] = $this->makeDropKey($fieldProps['old'], $tableName);
+                        $migration[] = $this->makeAddKey($fieldProps['new'], $tableName);
+                        break;
+                }
+            }
+        }
+
+        if ($migration) {
+            return "ALTER TABLE `{$this->dbName}`.`{$tableName}`\n  " . implode(",\n  ", $migration) . ";\n\n";
+        }
+
+        return false;
+    }
+
+
+    private function makeDropKey($index, $tableName)
+    {
+        if ($index['name'] == 'PRIMARY') {
+            $migration = "DROP PRIMARY KEY";
+        } else {
+            $migration = "DROP INDEX `{$index['name']}`";
+        }
+
+        return $migration;
+    }
+
+
+    private function makeAddKey($index, $tableName)
+    {
+        if ($index['name'] == 'PRIMARY') {
+            $migration = "ADD PRIMARY KEY ({$index['fields']})";
+        } else if ($index['unique']) {
+            $migration = "ADD UNIQUE `{$index['name']}` ({$index['fields']})";
+        } else {
+            $migration = "ADD INDEX `{$index['name']}` ({$index['fields']})";
+        }
+
+        return $migration;
+    }
+
+
+    private function makeAddForeignKey($index, $tableName)
+    {
+        return "ALTER TABLE `{$this->dbName}`.`{$tableName}` ADD CONSTRAINT `{$index['name']}` {$index['props']};\n";
+    }
+
+
+    private function makeDropForeignKey($index, $tableName)
+    {
+        return "ALTER TABLE `{$this->dbName}`.`{$tableName}` DROP FOREIGN KEY `{$index['name']}`;\n";
+    }
+
+
+    const SQL_DELIMITER = ';';
+
+    private function makeAddTrigger($triggerSql)
+    {
+        $delimiter = static::SQL_DELIMITER;
+        while (strpos($triggerSql, $delimiter) !== false) {
+            $delimiter .= static::SQL_DELIMITER;
+        }
+
+        $sql = "USE `{$this->dbName}`;\n";
+        // ; is a default delimiter in MySQL
+        // so if the trigger is one statement only, we can have less noise in the migration
+        if ($delimiter != ';') {
+            $sql .= "DELIMITER {$delimiter}\n";
+        }
+        $sql .= "{$triggerSql}{$delimiter}\n";
+        if ($delimiter != ';') {
+            $sql .= "DELIMITER ;\n";
+        }
+        $sql .= "\n";
+        return $sql;
+    }
+
+
+    private function makeDropTrigger($triggerName)
+    {
+        return "DROP TRIGGER `{$this->dbName}`.`{$triggerName}`;\n\n";
+    }
+
+
+    private function makeDropView($viewName)
+    {
+        return "DROP VIEW `{$this->dbName}`.`{$viewName}`;\n";
+    }
+
+
+    private function makeAddView($viewName, $view)
+    {
+        // View declaration may contain table references inside (view x as select * from table).
+        // Those references may omit database name, so we need to set default DB here.
+        return "USE `{$this->dbName}`;\n"
+            . "CREATE VIEW `{$this->dbName}`.`{$viewName}` {$view};\n"
+        ;
+    }
+
+
+    private function makeAlterView($viewName, $view)
+    {
+        return "USE `{$this->dbName}`;\n"
+            . "ALTER VIEW `{$this->dbName}`.`{$viewName}` {$view['new']};\n"
+        ;
+    }
 }

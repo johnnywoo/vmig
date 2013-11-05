@@ -1,4 +1,7 @@
-<?
+<?php
 
-class Vmig_Error extends Exception
-{}
+namespace Vmig;
+
+class Error extends \Exception
+{
+}

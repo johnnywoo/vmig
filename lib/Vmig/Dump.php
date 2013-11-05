@@ -1,91 +1,80 @@
-<?
+<?php
 
-class Vmig_Dump
+namespace Vmig;
+
+class Dump
 {
-	public static function create(Vmig_MysqlConnection $db, $dbname)
-	{
-		// loadload
-		$dump = '';
+    public static function create(MysqlConnection $db, $dbname)
+    {
+        $dump = '';
 
-		$db->query('USE '.$dbname);
+        $db->query('USE ' . $dbname);
 
-		// loading tables list
-		$tables = array();
-		$r = $db->query('SHOW TABLES');
-		while($row = $r->fetch_array())
-		{
-			$tables[] = reset($row);
-		}
-		sort($tables);
+        // loading tables list
+        $tables = array();
+        $r = $db->query('SHOW TABLES');
+        while ($row = $r->fetch_array()) {
+            $tables[] = reset($row);
+        }
+        sort($tables);
 
-		foreach($tables as $table)
-		{
-			$dump .= "\n-- $table\n";
+        foreach ($tables as $table) {
+            $dump .= "\n-- $table\n";
 
-			$rr = $db->query('SHOW CREATE TABLE `'.$table.'`');
-			$row = $rr->fetch_row();
-			$sql = $row[1];
+            $rr  = $db->query('SHOW CREATE TABLE `' . $table . '`');
+            $row = $rr->fetch_row();
+            $sql = $row[1];
 
-			// removing a_i part
-			$sql = preg_replace("/\s+AUTO_INCREMENT=\S*([^\r\n].*?)$/is", '$1', $sql);
+            // removing a_i part
+            $sql = preg_replace("/\s+AUTO_INCREMENT=\S*([^\r\n].*?)$/is", '$1', $sql);
 
-			// removing view params
-			$sql = preg_replace('/^(CREATE )[^\n]*? (VIEW)/', '$1$2', $sql);
+            // removing view params
+            $sql = preg_replace('/^(CREATE )[^\n]*? (VIEW)/', '$1$2', $sql);
 
-			// let's sort the CONSTRAINTs, if any.
-			$sql_array = explode("\n", $sql);
-			$constraints = array();
-			$constraints_pos = 0; // position of the last CONSTRAINT. After ksort, all CONSTRAINTs will be put there
-			foreach($sql_array as $string_num=>$sql_string)
-			{
-				if(preg_match("/^(\s*CONSTRAINT `([^`]*)`[^,]*),?$/i", $sql_string, $res))
-				{
-					$constraints[$res[2]] = $res[1];
-					$constraints_pos = $string_num;
-					unset($sql_array[$string_num]);
-				}
-			}
+            // let's sort the CONSTRAINTs, if any.
+            $sqlArray    = explode("\n", $sql);
+            $constraints = array();
 
-			if($constraints_pos > 0)
-			{
-				ksort($constraints); // by symbol_name
-				$sql_array[$constraints_pos] = implode(",\n", $constraints);
-				ksort($sql_array); // by string_num
-			}
+            $constraintsPos = 0; // position of the last CONSTRAINT. After ksort, all CONSTRAINTs will be put there
 
-			$dump .=  implode("\n", $sql_array).";\n";
-		}
+            foreach ($sqlArray as $stringNum => $sqlString) {
+                if (preg_match("/^(\s*CONSTRAINT `([^`]*)`[^,]*),?$/i", $sqlString, $res)) {
+                    $constraints[$res[2]] = $res[1];
+                    $constraintsPos = $stringNum;
+                    unset($sqlArray[$stringNum]);
+                }
+            }
 
-		$r = $db->query('SHOW TRIGGERS FROM `'.$dbname.'`');
-		while($row = $r->fetch_array())
-		{
-			$name = reset($row);
+            if ($constraintsPos > 0) {
+                ksort($constraints); // by symbol_name
+                $sqlArray[$constraintsPos] = implode(",\n", $constraints);
+                ksort($sqlArray); // by string_num
+            }
 
-			$rr = $db->query('SHOW CREATE TRIGGER `'.$dbname.'`.`'.$name.'`');
-			$cr_row = $rr->fetch_array();
-			$trigger_sql = $cr_row[2];
+            $dump .= implode("\n", $sqlArray) . ";\n";
+        }
 
-			// removing trigger params
-			$trigger_sql = preg_replace('/^(CREATE )[^\n]*? (TRIGGER)/', '$1$2', $trigger_sql);
+        $r = $db->query('SHOW TRIGGERS FROM `' . $dbname . '`');
+        while ($row = $r->fetch_array()) {
+            $name = reset($row);
 
-			$dump .= "\n-- trigger: {$name}\n$trigger_sql\n-- trigger end: {$name}\n";
-		}
+            $rr         = $db->query('SHOW CREATE TRIGGER `' . $dbname . '`.`' . $name . '`');
+            $crRow      = $rr->fetch_array();
+            $triggerSql = $crRow[2];
 
-		return new self($dump);
-	}
+            // removing trigger params
+            $triggerSql = preg_replace('/^(CREATE )[^\n]*? (TRIGGER)/', '$1$2', $triggerSql);
 
-	public static function load_from_file($file)
-	{
-		if(!is_readable($file))
-			throw new Vmig_Error('Unable to read dump from "'.$file.'"');
+            $dump .= "\n-- trigger: {$name}\n{$triggerSql}\n-- trigger end: {$name}\n";
+        }
 
-		return new self(file_get_contents($file));
-	}
+        return new self($dump);
+    }
 
-	public $sql = '';
+    public $sql = '';
 
-	public function __construct($sql)
-	{
-		$this->sql = $sql;
-	}
+    public function __construct($sql)
+    {
+        $this->sql = $sql;
+    }
 }
