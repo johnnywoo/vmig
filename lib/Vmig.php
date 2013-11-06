@@ -23,15 +23,15 @@ class Vmig
     {
         $statusText = '';
 
-        foreach ($this->config->databases as $db) {
+        foreach ($this->config->getDatabases() as $db => $dbAlias) {
             $dump       = $this->createDump($db);
             $schemeFrom = new Scheme($dump);
 
-            $dumpFile = "{$this->config->schemesPath}/{$db}.scheme.sql";
+            $dumpFile = "{$this->config->schemesPath}/{$dbAlias}.scheme.sql";
             $dump     = file_exists($dumpFile) ? file_get_contents($dumpFile) : '';
             $schemeTo = new Scheme($dump);
 
-            $diff   = new SchemesDiff($schemeFrom, $schemeTo, $db);
+            $diff   = new SchemesDiff($schemeFrom, $schemeTo, $this->config->singleDatabase ? null : $db);
             $status = $diff->renderStatusText($db);
 
             if ($status) {
@@ -40,7 +40,7 @@ class Vmig
         }
 
         if ($statusText) {
-            $statusText = "Database changes:" . $statusText;
+            $statusText = 'Database changes:' . $statusText;
         }
 
         $statusText .= $this->getMigrationsForStatus();
@@ -284,8 +284,8 @@ class Vmig
 
     private function createNewDumps()
     {
-        foreach ($this->config->databases as $db) {
-            $schemeFile = "{$this->config->schemesPath}/{$db}.scheme.sql";
+        foreach ($this->config->getDatabases() as $db => $dbAlias) {
+            $schemeFile = "{$this->config->schemesPath}/{$dbAlias}.scheme.sql";
             $this->createDump($db, $schemeFile);
         }
 
@@ -296,10 +296,11 @@ class Vmig
     private function doCreateMigrations($up = true, $forWhat = array())
     {
         if (!sizeof($forWhat)) {
-            $databases = $this->config->databases;
+            $databases = $this->config->getDatabases();
         } else {
-            // pick only DBs that are present in config->databases
-            $databases = array_intersect(array_keys($forWhat), $this->config->databases);
+            // pick only DBs that are present in config->getDatabases()
+            // $forWhat[$db][] = $table OR $forWhat[$db] = array()
+            $databases = array_intersect_key($this->config->getDatabases(), $forWhat);
         }
 
         $migrations = array(
@@ -315,11 +316,11 @@ class Vmig
             'alter_tables'      => array(),
         );
 
-        foreach ($databases as $db) {
+        foreach ($databases as $db => $dbAlias) {
             $dump       = $this->createDump($db);
             $schemeFrom = new Scheme($dump);
 
-            $dumpFile = "{$this->config->schemesPath}/{$db}.scheme.sql";
+            $dumpFile = "{$this->config->schemesPath}/{$dbAlias}.scheme.sql";
             $dump     = file_exists($dumpFile) ? file_get_contents($dumpFile) : '';
             $schemeTo = new Scheme($dump);
 
@@ -333,7 +334,7 @@ class Vmig
                 $tables = $forWhat[$db];
             }
 
-            $diff      = new SchemesDiff($schemeFrom, $schemeTo, $db, $tables);
+            $diff      = new SchemesDiff($schemeFrom, $schemeTo, $this->config->singleDatabase ? null : $db, $tables);
             $migration = $diff->renderMigration();
 
             $migrations = array_merge_recursive($migrations, $migration);

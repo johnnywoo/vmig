@@ -5,7 +5,7 @@ namespace Vmig;
 class SchemesDiff
 {
     private $diffData;
-    private $dbName;
+    private $dbName; // will be empty in single-db mode
 
 
     public function __construct($scheme1, $scheme2, $dbName, $tables = array())
@@ -574,7 +574,7 @@ class SchemesDiff
             }
         }
 
-        $migration = "CREATE TABLE `{$this->dbName}`.`{$tableName}` (\n";
+        $migration = "CREATE TABLE {$this->getDbPrefix()}`{$tableName}` (\n";
         $migration .= join(",\n", $lines) . "\n";
         $migration .= ") {$table['props']};\n\n";
 
@@ -585,7 +585,7 @@ class SchemesDiff
     private function makeDropTable($table)
     {
         $tableName = $table['name'];
-        $migration = "DROP TABLE `{$this->dbName}`.`{$tableName}`;\n\n";
+        $migration = "DROP TABLE {$this->getDbPrefix()}`{$tableName}`;\n\n";
         return $migration;
     }
 
@@ -648,7 +648,7 @@ class SchemesDiff
         }
 
         if ($migration) {
-            return "ALTER TABLE `{$this->dbName}`.`{$tableName}`\n  " . implode(",\n  ", $migration) . ";\n\n";
+            return "ALTER TABLE {$this->getDbPrefix()}`{$tableName}`\n  " . implode(",\n  ", $migration) . ";\n\n";
         }
 
         return false;
@@ -683,13 +683,13 @@ class SchemesDiff
 
     private function makeAddForeignKey($index, $tableName)
     {
-        return "ALTER TABLE `{$this->dbName}`.`{$tableName}` ADD CONSTRAINT `{$index['name']}` {$index['props']};\n";
+        return "ALTER TABLE {$this->getDbPrefix()}`{$tableName}` ADD CONSTRAINT `{$index['name']}` {$index['props']};\n";
     }
 
 
     private function makeDropForeignKey($index, $tableName)
     {
-        return "ALTER TABLE `{$this->dbName}`.`{$tableName}` DROP FOREIGN KEY `{$index['name']}`;\n";
+        return "ALTER TABLE {$this->getDbPrefix()}`{$tableName}` DROP FOREIGN KEY `{$index['name']}`;\n";
     }
 
 
@@ -702,7 +702,7 @@ class SchemesDiff
             $delimiter .= static::SQL_DELIMITER;
         }
 
-        $sql = "USE `{$this->dbName}`;\n";
+        $sql = $this->getUseLine();
         // ; is a default delimiter in MySQL
         // so if the trigger is one statement only, we can have less noise in the migration
         if ($delimiter != ';') {
@@ -719,13 +719,13 @@ class SchemesDiff
 
     private function makeDropTrigger($triggerName)
     {
-        return "DROP TRIGGER `{$this->dbName}`.`{$triggerName}`;\n\n";
+        return "DROP TRIGGER {$this->getDbPrefix()}`{$triggerName}`;\n\n";
     }
 
 
     private function makeDropView($viewName)
     {
-        return "DROP VIEW `{$this->dbName}`.`{$viewName}`;\n";
+        return "DROP VIEW {$this->getDbPrefix()}`{$viewName}`;\n";
     }
 
 
@@ -733,16 +733,21 @@ class SchemesDiff
     {
         // View declaration may contain table references inside (view x as select * from table).
         // Those references may omit database name, so we need to set default DB here.
-        return "USE `{$this->dbName}`;\n"
-            . "CREATE VIEW `{$this->dbName}`.`{$viewName}` {$view};\n"
-        ;
+        return $this->getUseLine() . "CREATE VIEW {$this->getDbPrefix()}`{$viewName}` {$view};\n";
     }
 
 
     private function makeAlterView($viewName, $view)
     {
-        return "USE `{$this->dbName}`;\n"
-            . "ALTER VIEW `{$this->dbName}`.`{$viewName}` {$view['new']};\n"
-        ;
+        return $this->getUseLine() . "ALTER VIEW {$this->getDbPrefix()}`{$viewName}` {$view['new']};\n";
+    }
+
+    private function getUseLine()
+    {
+        return $this->dbName ? "USE `{$this->dbName}`;\n" : '';
+    }
+    private function getDbPrefix()
+    {
+        return $this->dbName ? "`{$this->dbName}`." : '';
     }
 }

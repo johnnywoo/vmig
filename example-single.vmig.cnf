@@ -1,0 +1,36 @@
+;; Vmig project configuration
+;;
+;; Put this file in your project root.
+;; All path names are relative to the dirname of config
+;; (absolute paths are allowed too).
+;;
+;; If you are using source control (svn, git, etc),
+;; you need to make sure both schemes and migrations are versioned.
+;;
+;; SINGLE DATABASE MODE
+;;
+;; Vmig only tracks one database in single db mode.
+;; The database name will not appear in any vmig files, which is useful
+;; when you want to have multiple instances of your project to live on
+;; the same DB server.
+
+;; Tracked database name (you can always override this by passing --single-database when invoking vmig)
+single-database=
+
+;; A table to store applied migrations.
+;; In single db mode you don't have to specify the database here.
+;migrations-table=migrations
+
+;; A folder for your table schemes
+schemes-path=database
+
+;; A folder for your migrations
+migrations-path=database/migrations
+
+;; Mysql connection. If not set, default parameters are read from mysql console
+;; client (essentially from ~/.my.cnf). You may review them by running
+;; 'mysql --print-defaults'.
+;connection=mysql://user:pass@host:port
+
+;; Prevent any migration from running down (useful for production)
+;fail-on-down=yes

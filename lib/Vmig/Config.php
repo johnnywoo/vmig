@@ -76,7 +76,9 @@ class Config
         return new static($options, dirname($file));
     }
 
-    private static $requiredFields = array('databases', 'migrations-path', 'schemes-path', 'migrations-table');
+    private static $requiredFields = array('migrations-path', 'schemes-path');
+
+    const DEFAULT_MIGRATIONS_TABLE_FOR_SINGLE_DB = 'migrations';
 
     public $migrationsPath = '';
     public $schemesPath    = '';
@@ -87,8 +89,8 @@ class Config
     public $failOnDown     = '';
     public $noColor        = false;
     public $charset        = '';
-
-    public $databases = array();
+    public $singleDatabase = '';
+    public $databases      = array();
 
     public function __construct(array $params, $dir = '')
     {
@@ -101,15 +103,36 @@ class Config
         $this->migrationsPath = self::absolutizePath($params['migrations-path'], $dir);
         $this->schemesPath    = self::absolutizePath($params['schemes-path'], $dir);
 
-        $parts = explode('.', $params['migrations-table']);
+        if (empty($params['single-database']) && empty($params['databases'])) {
+            throw new Error('Please set up "single-database" or "databases" in config or vmig arguments');
+        }
+
+        if (!empty($params['single-database']) && !empty($params['databases'])) {
+            throw new Error('Config parameters "single-database" and "databases" are mutually exclusive');
+        }
+
+        if (!empty($params['databases'])) {
+            $this->databases = preg_split('/\s+/', $params['databases'], -1, PREG_SPLIT_NO_EMPTY);
+        } else {
+            $this->singleDatabase = $params['single-database'];
+        }
+
+        $parts = explode('.', empty($params['migrations-table']) ? '' : $params['migrations-table']);
         if (count($parts) != 2) {
-            throw new Error('Config parameter "migrations-table" should be set as "dbname.tablename"');
+            if ($this->singleDatabase) {
+                // single-database mode: we have a default database and table
+                if (empty($params['migrations-table'])) {
+                    $parts = array(static::DEFAULT_MIGRATIONS_TABLE_FOR_SINGLE_DB);
+                }
+                array_unshift($parts, $this->singleDatabase);
+            } else {
+                throw new Error('Config parameter "migrations-table" should be set as "dbname.tablename"');
+            }
         }
 
         $this->migrationDb    = $parts[0];
         $this->migrationTable = $parts[1];
 
-        $this->databases = preg_split('/\s+/', $params['databases'], -1, PREG_SPLIT_NO_EMPTY);
 
         // mysql driver will try to find the connection in .my.cnf
         // so this is not a required parameter
@@ -122,6 +145,17 @@ class Config
         // boolean values: "", "no" and false is off; "yes" and true is on (strings from file config, bool from CLI options)
         $this->failOnDown = (!empty($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no');
         $this->noColor    = (!empty($params['no-color']) && strtolower($params['no-color']) != 'no');
+    }
+
+    /**
+     * @return array realDbname => alias
+     */
+    public function getDatabases()
+    {
+        if ($this->singleDatabase) {
+            return array($this->singleDatabase => 'db');
+        }
+        return array_combine($this->databases, $this->databases);
     }
 
     private static function absolutizePath($path, $cwd)

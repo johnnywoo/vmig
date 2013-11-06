@@ -11,6 +11,14 @@ require_once __DIR__ . '/vendor/cliff/lib/Cliff.php';
 use cliff\Cliff;
 use cliff\Exception_ParseError;
 
+// STOPPER для поддержки однобазового режима нам нужно: хранить схему в каком-то стандартном месте, везде эту базу исключать из запросов (схемы, миграции)
+// STOPPER делаем --single-database, запрещаем включать одновременно с --databases, пляшем от этого
+// STOPPER при --single-database она становится префиксом по умолчанию к --migrations-table
+
+
+// STOPPER плюс надо сделать некий project-key, по которому мы фильтруем миграции, чтобы в одной базе могли жить несколько вмигов
+// STOPPER туда же делаем --name-prefix по которому фильтруем все сущности (может его же и сделать ключом проекта?)
+
 define('EXIT_OK',       0);
 define('EXIT_MODIFIED', 1);
 define('EXIT_ERROR',    2);
@@ -42,6 +50,7 @@ Cliff::run(Cliff::config()
 
         Default is just `mysql`, i.e. assuming the client is in PATH.
     ')
+    ->option('--single-database -d', 'Database that is watched for migrations in single-db mode')
     ->option('--databases', 'List of database names which are watched for migrations')
     ->flag('--fail-on-down', '
         Makes vmig fail whenever it has to roll a migration down
@@ -54,6 +63,8 @@ Cliff::run(Cliff::config()
         Table name for migration data
 
         Format: `db.table`. The table will be created if not exists; database must exist.
+        In single-db mode you can omit the database; also the table name will
+        default to `migrations`.
     ')
     ->flag('--no-color', 'No color in the output')
 
@@ -63,6 +74,8 @@ Cliff::run(Cliff::config()
 
     ->command('init', Cliff::config()
         ->desc('Places default .vmig.cnf in current working directory')
+        ->option('--single-database -d', 'Set up single-db mode with given database')
+        ->flag('--multiple -m', 'Set up multiple-db mode')
     )
 
     ->command('diff d', Cliff::config()
@@ -180,13 +193,43 @@ $options = array_filter($_REQUEST, function($val) {
     return $val !== null;
 });
 
-$config = Config::find(getcwd(), $options);
-$vmig   = new Vmig($config);
+$vmig = null;
+if ($command != 'init') {
+    $config = Config::find(getcwd(), $options);
+    $vmig   = new Vmig($config);
+}
 
 switch ($command) {
     case 'init':
+        if (!(empty($cmdOptions['single-database']) xor empty($cmdOptions['multiple']))) {
+            echo "You should choose operating mode for your project.\n";
+            echo "\n";
+            echo "SINGLE DATABASE MODE\n";
+            echo "  vmig init -d <dbname>\n";
+            echo "Vmig only tracks one database in single db mode.\n";
+            echo "The database name will not appear in any vmig files, which is useful\n";
+            echo "when you want to have multiple instances of your project to live on\n";
+            echo "the same DB server.\n";
+            echo "\n";
+            echo "MULTIPLE DATABASES MODE\n";
+            echo "  vmig init -m\n";
+            echo "Vmig tracks multiple databases. Migrations and schemes will contain database names,\n";
+            echo "requiring you to have the same database names on all machines with the project.\n";
+            echo "\n";
+            exit(EXIT_ERROR);
+        }
+
+        $singleDatabase = $cmdOptions['single-database'];
+
+        if ($singleDatabase) {
+            $configContent = file_get_contents(__DIR__ . '/example-single.vmig.cnf');
+            $configContent = str_replace('single-database=', 'single-database=' . $singleDatabase, $configContent);
+        } else {
+            $configContent = file_get_contents(__DIR__ . '/example-multiple.vmig.cnf');
+        }
+
         echo "Creating default config in " . Config::DEFAULT_CONF_FILE . "\n";
-        copy(__DIR__ . '/example.vmig.cnf', Config::DEFAULT_CONF_FILE);
+        file_put_contents(Config::DEFAULT_CONF_FILE, $configContent);
 
         $config = Config::load(Config::DEFAULT_CONF_FILE);
         if (!file_exists($config->schemesPath)) {
