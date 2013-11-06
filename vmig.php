@@ -11,9 +11,7 @@ require_once __DIR__ . '/vendor/cliff/lib/Cliff.php';
 use cliff\Cliff;
 use cliff\Exception_ParseError;
 
-// STOPPER для поддержки однобазового режима нам нужно: хранить схему в каком-то стандартном месте, везде эту базу исключать из запросов (схемы, миграции)
-// STOPPER делаем --single-database, запрещаем включать одновременно с --databases, пляшем от этого
-// STOPPER при --single-database она становится префиксом по умолчанию к --migrations-table
+// STOPPER console_color меняем на хелпер в cliff
 
 
 // STOPPER плюс надо сделать некий project-key, по которому мы фильтруем миграции, чтобы в одной базе могли жить несколько вмигов
@@ -73,7 +71,23 @@ Cliff::run(Cliff::config()
     //
 
     ->command('init', Cliff::config()
-        ->desc('Places default .vmig.cnf in current working directory')
+        ->desc('
+            Places default .vmig.cnf in current working directory
+
+            You should choose operating mode for your project.
+
+            SINGLE DATABASE MODE
+              vmig init -d <dbname>
+            Vmig only tracks one database in single db mode.
+            The database name will not appear in migrations and schemes, which is useful
+            when you want to have multiple instances of your project to live on
+            the same DB server.
+
+            MULTIPLE DATABASES MODE
+              vmig init -m
+            Vmig tracks multiple databases. Migrations and schemes will contain database names,
+            requiring you to have the same database names on all machines with the project.
+        ')
         ->option('--single-database -d', 'Set up single-db mode with given database')
         ->flag('--multiple -m', 'Set up multiple-db mode')
     )
@@ -207,7 +221,7 @@ switch ($command) {
             echo "SINGLE DATABASE MODE\n";
             echo "  vmig init -d <dbname>\n";
             echo "Vmig only tracks one database in single db mode.\n";
-            echo "The database name will not appear in any vmig files, which is useful\n";
+            echo "The database name will not appear in migrations and schemes, which is useful\n";
             echo "when you want to have multiple instances of your project to live on\n";
             echo "the same DB server.\n";
             echo "\n";

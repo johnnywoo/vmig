@@ -10,7 +10,7 @@
 ;; SINGLE DATABASE MODE
 ;;
 ;; Vmig only tracks one database in single db mode.
-;; The database name will not appear in any vmig files, which is useful
+;; The database name will not appear in migrations and schemes, which is useful
 ;; when you want to have multiple instances of your project to live on
 ;; the same DB server.
 

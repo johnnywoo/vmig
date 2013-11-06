@@ -45,6 +45,14 @@ class Vmig
 
         $statusText .= $this->getMigrationsForStatus();
 
+        // STOPPER
+        // STOPPER
+        // STOPPER
+        // STOPPER
+        // STOPPER
+        error_reporting(E_ALL - E_STRICT);
+        include_once 'PEAR.php';
+        include_once 'Console/Color.php';
         if (!$this->config->noColor && class_exists('\PEAR') && class_exists('\Console_Color')) {
             $statusText = \Console_Color::convert($statusText);
         } else {
