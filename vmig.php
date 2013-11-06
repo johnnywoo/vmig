@@ -18,158 +18,158 @@ define('EXIT_ERROR',    2);
 Cliff::$error_exit_code = EXIT_ERROR;
 Cliff::run(Cliff::config()
 
-	->desc('
-		Vmig: MySQL database migrations manager
+    ->desc('
+        Vmig: MySQL database migrations manager
 
-		Migrations config is read from `.vmig.cnf`, which is searched in current
-		working directory and its parents.
+        Migrations config is read from `.vmig.cnf`, which is searched in current
+        working directory and its parents.
 
-		Note: you should not symlink vmig executable into your PATH, because it calls
-		vmig.php relative to its own position and therefore link would not work.
-		Instead, you should either make an alias or a proxy script with absolute path.
-	')
+        Note: you should not symlink vmig executable into your PATH, because it calls
+        vmig.php relative to its own position and therefore link would not work.
+        Instead, you should either make an alias or a proxy script with absolute path.
+    ')
 
-	->option('--config', 'Use this file as config instead of searching for .vmig.cnf')
-	->option('--connection', '
-		MySQL connection DSN (mysql://user:pass@host:port)
+    ->option('--config', 'Use this file as config instead of searching for .vmig.cnf')
+    ->option('--connection', '
+        MySQL connection DSN (mysql://user:pass@host:port)
 
-		If not given, default parameters are read from mysql console client
-		(essentially from ~/.my.cnf). You may review them by running
-		`mysql --print-defaults`.
-	')
-	->option('--mysql-client', '
-		MySQL client filename to run migrations with
+        If not given, default parameters are read from mysql console client
+        (essentially from ~/.my.cnf). You may review them by running
+        `mysql --print-defaults`.
+    ')
+    ->option('--mysql-client', '
+        MySQL client filename to run migrations with
 
-		Default is just `mysql`, i.e. assuming the client is in PATH.
-	')
-	->option('--databases', 'List of database names which are watched for migrations')
-	->flag('--fail-on-down', '
-		Makes vmig fail whenever it has to roll a migration down
+        Default is just `mysql`, i.e. assuming the client is in PATH.
+    ')
+    ->option('--databases', 'List of database names which are watched for migrations')
+    ->flag('--fail-on-down', '
+        Makes vmig fail whenever it has to roll a migration down
 
-		Useful in production environment.
-	')
-	->option('--migrations-path', 'Path to migrations folder')
-	->option('--schemes-path', 'Path to schemes folder')
-	->option('--migrations-table', '
-		Table name for migration data
+        Useful in production environment.
+    ')
+    ->option('--migrations-path', 'Path to migrations folder')
+    ->option('--schemes-path', 'Path to schemes folder')
+    ->option('--migrations-table', '
+        Table name for migration data
 
-		Format: `db.table`. The table will be created if not exists; database must exist.
-	')
-	->flag('--no-color', 'No color in the output')
+        Format: `db.table`. The table will be created if not exists; database must exist.
+    ')
+    ->flag('--no-color', 'No color in the output')
 
-	//
-	// COMMANDS
-	//
+    //
+    // COMMANDS
+    //
 
-	->command('init', Cliff::config()
-		->desc('Places default .vmig.cnf in current working directory')
-	)
+    ->command('init', Cliff::config()
+        ->desc('Places default .vmig.cnf in current working directory')
+    )
 
-	->command('diff d', Cliff::config()
-		->desc('
-			Compares dump and database
+    ->command('diff d', Cliff::config()
+        ->desc('
+            Compares dump and database
 
-			Exits with status 1 if changes present; prints found differences as SQL
-			(commands to convert dumped scheme into actual).
-		')
-		->flag('--reverse -r', '
-			Invert diff direction
+            Exits with status 1 if changes present; prints found differences as SQL
+            (commands to convert dumped scheme into actual).
+        ')
+        ->flag('--reverse -r', '
+            Invert diff direction
 
-			Print commands to convert actual scheme into dumped.
-		')
-	)
+            Print commands to convert actual scheme into dumped.
+        ')
+    )
 
-	->command('create c', Cliff::config()
-		->desc('
-			Creates a new migration by comparing dump and database
+    ->command('create c', Cliff::config()
+        ->desc('
+            Creates a new migration by comparing dump and database
 
-			The migration is placed in migrations_path from the config and also printed to stdout.
-			If dump and database are equal, the empty migration is not created.
-			If `name` is given, it is used as a name for the migration.
-			Otherwise current git branch name is used (except for master).
-			After being created, the migration is approved.
-		')
-		->flag('--force -f', 'Create an empty migration even if no changes were found')
-		->flag('--no-approve -A', '
-			If set, the migration will not be auto-approved
+            The migration is placed in migrations_path from the config and also printed to stdout.
+            If dump and database are equal, the empty migration is not created.
+            If `name` is given, it is used as a name for the migration.
+            Otherwise current git branch name is used (except for master).
+            After being created, the migration is approved.
+        ')
+        ->flag('--force -f', 'Create an empty migration even if no changes were found')
+        ->flag('--no-approve -A', '
+            If set, the migration will not be auto-approved
 
-			You have to run "vmig approve" after that.
-		')
-		->param('name', array(
-			'Migration name that goes into its filename',
-			'is_required' => false,
-		))
-	)
+            You have to run "vmig approve" after that.
+        ')
+        ->param('name', array(
+            'Migration name that goes into its filename',
+            'is_required' => false,
+        ))
+    )
 
-	->command('reset r', Cliff::config()
-		->desc('
-			Alters database to structure from dump
+    ->command('reset r', Cliff::config()
+        ->desc('
+            Alters database to structure from dump
 
-			You can tell vmig what to reset by setting db1, db2 etc.
-		')
-		->many_params('db_or_table', array(
-			'Database or table names to reset
+            You can tell vmig what to reset by setting db1, db2 etc.
+        ')
+        ->many_params('db_or_table', array(
+            'Database or table names to reset
 
-			Format: `db[.table]`.',
-			'is_required' => false,
-		))
-	)
+            Format: `db[.table]`.',
+            'is_required' => false,
+        ))
+    )
 
-	->command('approve a', Cliff::config()
-		->desc('
-			Marks migrations as applied without actually running them
+    ->command('approve a', Cliff::config()
+        ->desc('
+            Marks migrations as applied without actually running them
 
-			If filenames are not given, all existing migrations will be marked.
-			In this case database schemes will be dumped.
-		')
-		->many_params('filename', array(
-			'Names of migrations to approve (without paths!)',
-			'is_required' => false,
-		))
-	)
+            If filenames are not given, all existing migrations will be marked.
+            In this case database schemes will be dumped.
+        ')
+        ->many_params('filename', array(
+            'Names of migrations to approve (without paths!)',
+            'is_required' => false,
+        ))
+    )
 
-	->command('migrate m', Cliff::config()
-		->desc('
-			Migrates the database to current version (as defined by migration files)
+    ->command('migrate m', Cliff::config()
+        ->desc('
+            Migrates the database to current version (as defined by migration files)
 
-			1. Finds applied migrations that are not present in filesystem, runs them down.
-			2. Finds non-applied migrations, runs them up.
-		')
-	)
+            1. Finds applied migrations that are not present in filesystem, runs them down.
+            2. Finds non-applied migrations, runs them up.
+        ')
+    )
 
-	->command('status s', Cliff::config()
-		->desc('
-			Shows database changes and out-of-sync migrations in human-readable format
+    ->command('status s', Cliff::config()
+        ->desc('
+            Shows database changes and out-of-sync migrations in human-readable format
 
-			Install Console_Color package from PEAR to get colored output.
-		')
-	)
+            Install Console_Color package from PEAR to get colored output.
+        ')
+    )
 
-	->command('up', Cliff::config()
-		->desc('
-			Apply one migration
+    ->command('up', Cliff::config()
+        ->desc('
+            Apply one migration
 
-			If migration with given filename exists both in db and file,
-			you need to specify source with one of parameters; otherwise parameter is optional.
-		')
-		->flag('--from-file -f',  'Use migration from filesystem')
-		->flag('--from-db -d',    'Use migration from database')
-		->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
-		->many_params('filename', 'Names of migrations to apply (without paths!)')
-	)
+            If migration with given filename exists both in db and file,
+            you need to specify source with one of parameters; otherwise parameter is optional.
+        ')
+        ->flag('--from-file -f',  'Use migration from filesystem')
+        ->flag('--from-db -d',    'Use migration from database')
+        ->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
+        ->many_params('filename', 'Names of migrations to apply (without paths!)')
+    )
 
-	->command('down', Cliff::config()
-		->desc('
-			Rollback one migration
+    ->command('down', Cliff::config()
+        ->desc('
+            Rollback one migration
 
-			If migration with given filename exists both in db and file,
-			you need to specify source with one of parameters; otherwise parameter is optional.
-		')
-		->flag('--from-file -f',  'Use migration from filesystem')
-		->flag('--from-db -d',    'Use migration from database')
-		->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
-		->many_params('filename', 'Names of migrations to rollback (without paths!)')
-	)
+            If migration with given filename exists both in db and file,
+            you need to specify source with one of parameters; otherwise parameter is optional.
+        ')
+        ->flag('--from-file -f',  'Use migration from filesystem')
+        ->flag('--from-db -d',    'Use migration from database')
+        ->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
+        ->many_params('filename', 'Names of migrations to rollback (without paths!)')
+    )
 );
 
 
@@ -177,14 +177,14 @@ $command    = $_REQUEST['command'];
 $cmdOptions = $_REQUEST[$command];
 
 $options = array_filter($_REQUEST, function($val) {
-	return $val !== null;
+    return $val !== null;
 });
 
 $config = Config::find(getcwd(), $options);
 $vmig   = new Vmig($config);
 
 switch ($command) {
-	case 'init':
+    case 'init':
         echo "Creating default config in " . Config::DEFAULT_CONF_FILE . "\n";
         copy(__DIR__ . '/example.vmig.cnf', Config::DEFAULT_CONF_FILE);
 

@@ -52,16 +52,16 @@ class tVmig extends \PHPUnit_Framework_TestCase
 
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test1` (
-				`id` int(11) NOT NULL auto_increment,
-				`field1` int(11) NOT NULL default '0',
-				`field2` varchar(255) NOT NULL default '',
-				`field3` int(11) NOT NULL default '0',
-				`field4` int(11) NOT NULL default '0',
-				`field5` int(11) NOT NULL default '0',
-				PRIMARY KEY  (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test1` (
+                `id` int(11) NOT NULL auto_increment,
+                `field1` int(11) NOT NULL default '0',
+                `field2` varchar(255) NOT NULL default '',
+                `field3` int(11) NOT NULL default '0',
+                `field4` int(11) NOT NULL default '0',
+                `field5` int(11) NOT NULL default '0',
+                PRIMARY KEY  (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
 
         $this->exec('approve');
@@ -203,11 +203,11 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test100` (
-				`id` int(11) NOT NULL auto_increment,
-				PRIMARY KEY  (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test100` (
+                `id` int(11) NOT NULL auto_increment,
+                PRIMARY KEY  (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
         $this->exec('create table_down');
         $this->exec('approve');
@@ -222,11 +222,11 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test100` (
-				`id` int(11) NOT NULL auto_increment,
-				PRIMARY KEY  (`id`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test100` (
+                `id` int(11) NOT NULL auto_increment,
+                PRIMARY KEY  (`id`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
         $this->exec('create table_up');
         $this->execReset();
@@ -265,13 +265,13 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test100` (
-				`id` int(11) NOT NULL auto_increment,
-				`field1` int(11) NOT NULL default '0',
-				PRIMARY KEY  (`id`),
-				KEY `field1` (`field1`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test100` (
+                `id` int(11) NOT NULL auto_increment,
+                `field1` int(11) NOT NULL default '0',
+                PRIMARY KEY  (`id`),
+                KEY `field1` (`field1`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
         $this->db->query("ALTER TABLE `{$this->testDbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
@@ -291,13 +291,13 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test100` (
-				`id` int(11) NOT NULL auto_increment,
-				`field1` int(11) NOT NULL default '0',
-				PRIMARY KEY  (`id`),
-				KEY `field1` (`field1`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test100` (
+                `id` int(11) NOT NULL auto_increment,
+                `field1` int(11) NOT NULL default '0',
+                PRIMARY KEY  (`id`),
+                KEY `field1` (`field1`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
         $this->db->query("ALTER TABLE `{$this->testDbname}`.`test100` ADD CONSTRAINT `FK_test` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
 
@@ -317,15 +317,15 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $this->db->query(
             "
-			CREATE TABLE `{$this->testDbname}`.`test100` (
-				`id` int(11) NOT NULL auto_increment,
-				`field1` int(11) NOT NULL default '0',
-				`field2` int(11) NOT NULL default '0',
-				PRIMARY KEY  (`id`),
-				KEY `field1` (`field1`),
-				KEY `field2` (`field2`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
-		"
+            CREATE TABLE `{$this->testDbname}`.`test100` (
+                `id` int(11) NOT NULL auto_increment,
+                `field1` int(11) NOT NULL default '0',
+                `field2` int(11) NOT NULL default '0',
+                PRIMARY KEY  (`id`),
+                KEY `field1` (`field1`),
+                KEY `field2` (`field2`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251;
+        "
         );
         $this->db->query("ALTER TABLE `{$this->testDbname}`.`test100` ADD CONSTRAINT `FK_test1` FOREIGN KEY (`field1`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
         $this->db->query("ALTER TABLE `{$this->testDbname}`.`test100` ADD CONSTRAINT `FK_test2` FOREIGN KEY (`field2`) REFERENCES `test1` (`id`) ON DELETE CASCADE ON UPDATE CASCADE");
@@ -540,10 +540,10 @@ class tVmig extends \PHPUnit_Framework_TestCase
     {
         $result = $this->db->query(
             "
-			SELECT `query`
-			FROM `{$this->config->migrationDb}`.`{$this->config->migrationTable}`
-			ORDER BY `name`
-			DESC LIMIT 1"
+            SELECT `query`
+            FROM `{$this->config->migrationDb}`.`{$this->config->migrationTable}`
+            ORDER BY `name`
+            DESC LIMIT 1"
         );
         if (!$result->num_rows) {
             return false;

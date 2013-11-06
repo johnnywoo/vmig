@@ -202,9 +202,9 @@ class Vmig
         if (count($values)) {
             $values = implode(', ', $values);
             $db->query("
-				INSERT INTO `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (name, query, sha1) VALUES {$values}
-				ON DUPLICATE KEY UPDATE query = VALUES(query), sha1 = VALUES(sha1);
-			");
+                INSERT INTO `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (name, query, sha1) VALUES {$values}
+                ON DUPLICATE KEY UPDATE query = VALUES(query), sha1 = VALUES(sha1);
+            ");
         }
 
         if (empty($filenames)) {
@@ -444,15 +444,15 @@ class Vmig
     private function createMigrationTableIfNecessary()
     {
         $this->getDb()->query("
-			CREATE TABLE IF NOT EXISTS `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (
-				`id` int(11) NOT NULL auto_increment,
-				`name` varchar(255) NOT NULL default '',
-				`query` longtext NOT NULL,
-				`sha1` VARCHAR(40) NOT NULL,
-				PRIMARY KEY (`id`),
-				UNIQUE KEY `name` (`name`)
-			) ENGINE=InnoDB DEFAULT CHARSET=cp1251
-		");
+            CREATE TABLE IF NOT EXISTS `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (
+                `id` int(11) NOT NULL auto_increment,
+                `name` varchar(255) NOT NULL default '',
+                `query` longtext NOT NULL,
+                `sha1` VARCHAR(40) NOT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE KEY `name` (`name`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251
+        ");
     }
 
     /**
@@ -611,10 +611,10 @@ class Vmig
         $sha1  = $db->escape($migration['sha1']);
 
         $db->query("
-			INSERT INTO `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (name, query, sha1)
-			VALUES ('{$name}', '{$query}', '{$sha1}')
-			ON DUPLICATE KEY UPDATE query = VALUES(query), sha1 = VALUES(sha1)
-		");
+            INSERT INTO `{$this->config->migrationDb}`.`{$this->config->migrationTable}` (name, query, sha1)
+            VALUES ('{$name}', '{$query}', '{$sha1}')
+            ON DUPLICATE KEY UPDATE query = VALUES(query), sha1 = VALUES(sha1)
+        ");
     }
 
     public function disproveMigration($name)
