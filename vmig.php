@@ -2,17 +2,12 @@
 
 namespace Vmig;
 
-// optional dependency: pear package Console_Color
-
 require_once __DIR__ . '/lib/Vmig/Config.php';
 require_once __DIR__ . '/lib/Vmig.php';
 require_once __DIR__ . '/vendor/cliff/lib/Cliff.php';
 
 use cliff\Cliff;
 use cliff\Exception_ParseError;
-
-// STOPPER console_color меняем на хелпер в cliff
-
 
 // STOPPER плюс надо сделать некий project-key, по которому мы фильтруем миграции, чтобы в одной базе могли жить несколько вмигов
 // STOPPER туда же делаем --name-prefix по которому фильтруем все сущности (может его же и сделать ключом проекта?)
@@ -165,11 +160,7 @@ Cliff::run(Cliff::config()
     )
 
     ->command('status s', Cliff::config()
-        ->desc('
-            Shows database changes and out-of-sync migrations in human-readable format
-
-            Install Console_Color package from PEAR to get colored output.
-        ')
+        ->desc('Shows database changes and out-of-sync migrations in human-readable format')
     )
 
     ->command('up', Cliff::config()

@@ -433,9 +433,6 @@ class tVmig extends \PHPUnit_Framework_TestCase
 
     function test_noColorFlag()
     {
-        if (!class_exists('PEAR') || !class_exists('Console_Color')) {
-            $this->markTestSkipped('Class Console_Color does not exist, noColor test skipped.');
-        }
         $this->db->query("ALTER TABLE `{$this->testDbname}`.`test1` ADD COLUMN `field200` int(11) NOT NULL;");
         $statusColored     = $this->exec('status');
         $statusNotColored = $this->exec('--no-color status');

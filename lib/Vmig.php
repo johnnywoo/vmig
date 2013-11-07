@@ -45,21 +45,31 @@ class Vmig
 
         $statusText .= $this->getMigrationsForStatus();
 
-        // STOPPER
-        // STOPPER
-        // STOPPER
-        // STOPPER
-        // STOPPER
-        error_reporting(E_ALL - E_STRICT);
-        include_once 'PEAR.php';
-        include_once 'Console/Color.php';
-        if (!$this->config->noColor && class_exists('\PEAR') && class_exists('\Console_Color')) {
-            $statusText = \Console_Color::convert($statusText);
-        } else {
-            $statusText = preg_replace('@%[ygrnm]@', '', $statusText);
-        }
+        $statusText = $this->convertColors($statusText);
 
         echo $statusText;
+    }
+
+    private function convertColors($str)
+    {
+        $noColor = $this->config->noColor;
+        return preg_replace_callback(
+            '/%[ygrnm]/',
+            function ($match) use ($noColor) {
+                if ($noColor) {
+                    return '';
+                }
+                switch ($match[0]) {
+                    case '%y': return "\033[33m";
+                    case '%g': return "\033[32m";
+                    case '%r': return "\033[31m";
+                    case '%m': return "\033[35m";
+                    case '%n': return "\033[0m";
+                }
+                return ''; // IDE calmer
+            },
+            $str
+        );
     }
 
     private function getMigrationsForStatus()
