@@ -24,7 +24,7 @@ class MysqlConnection
      * @param string $charset
      * @param string $mysqlClient
      */
-    public function __construct($dsn, $charset = 'cp1251', $mysqlClient = 'mysql')
+    public function __construct($dsn, $charset = 'utf8', $mysqlClient = 'mysql')
     {
         $p = parse_url($dsn);
         if (isset($p['scheme']) && strtolower($p['scheme']) == 'mysql') {

@@ -143,7 +143,7 @@ class Config
 
         $this->mysqlClient = isset($params['mysql-client']) ? $params['mysql-client'] : 'mysql';
 
-        $this->charset = isset($params['charset']) ? $params['charset'] : 'cp1251';
+        $this->charset = isset($params['charset']) ? $params['charset'] : 'utf8';
 
         // boolean values: "", "no" and false is off; "yes" and true is on (strings from file config, bool from CLI options)
         $this->failOnDown = (!empty($params['fail-on-down']) && strtolower($params['fail-on-down']) != 'no');

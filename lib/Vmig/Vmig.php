@@ -474,7 +474,7 @@ class Vmig
                 `sha1` VARCHAR(40) NOT NULL,
                 PRIMARY KEY (`id`),
                 UNIQUE KEY `name` (`name`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=cp1251
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8
         ");
     }
 

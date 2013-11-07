@@ -2,3 +2,4 @@ schemes-path=scheme
 migrations-path=migrations
 migrations-table=migrations.test_migrations
 databases=vmig_test
+charset=cp1251
