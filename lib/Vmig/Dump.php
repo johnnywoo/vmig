@@ -4,7 +4,16 @@ namespace Vmig;
 
 class Dump
 {
-    public static function create(MysqlConnection $db, $dbname)
+    private static function isPrefixed($name, $namePrefix)
+    {
+        if (!$namePrefix) {
+            return true;
+        }
+
+        return substr($name, 0, strlen($namePrefix)) == $namePrefix;
+    }
+
+    public static function create(MysqlConnection $db, $dbname, $namePrefix)
     {
         $dump = '';
 
@@ -14,7 +23,10 @@ class Dump
         $tables = array();
         $r = $db->query('SHOW TABLES');
         while ($row = $r->fetch_array()) {
-            $tables[] = reset($row);
+            $tableName = reset($row);
+            if (static::isPrefixed($tableName, $namePrefix)) {
+                $tables[] = $tableName;
+            }
         }
         sort($tables);
 
@@ -57,6 +69,9 @@ class Dump
         $r = $db->query('SHOW TRIGGERS FROM `' . $dbname . '`');
         while ($row = $r->fetch_array()) {
             $name = reset($row);
+            if (!static::isPrefixed($name, $namePrefix)) {
+                continue;
+            }
 
             $rr         = $db->query('SHOW CREATE TRIGGER `' . $dbname . '`.`' . $name . '`');
             $crRow      = $rr->fetch_array();

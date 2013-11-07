@@ -41,6 +41,7 @@ Cliff::run(Cliff::config()
         Default is just `mysql`, i.e. assuming the client is in PATH.
     ')
     ->option('--single-database -d', 'Database that is watched for migrations in single-db mode')
+    ->option('--name-prefix', 'Name prefix to filter tables and other entities in single-db mode')
     ->option('--databases', 'List of database names which are watched for migrations')
     ->flag('--fail-on-down', '
         Makes vmig fail whenever it has to roll a migration down

@@ -385,7 +385,7 @@ class Vmig
         // so if it does not exist, it will be skipped on first run if we don't create it here
         $this->createMigrationTableIfNecessary();
 
-        $dump = Dump::create($this->getDb(), $dbname);
+        $dump = Dump::create($this->getDb(), $dbname, $this->config->namePrefix);
 
         if ($dumpFile != '') {
             file_put_contents($dumpFile, $dump->sql);
@@ -400,6 +400,10 @@ class Vmig
         $migration = preg_replace('@-- Migration (Down|Up)@', '', $migration);
         $migration = trim($migration) . "\n";
 
+        if ($this->config->singleDatabase) {
+            $db = $this->getDb()->escape($this->config->singleDatabase)
+            $migration = "USE `{$db}`;\n" . $migration;
+        }
         $this->getDb()->executeSqlScript($migration);
     }
 

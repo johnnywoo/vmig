@@ -90,6 +90,7 @@ class Config
     public $noColor        = false;
     public $charset        = '';
     public $singleDatabase = '';
+    public $namePrefix     = '';
     public $databases      = array();
 
     public function __construct(array $params, $dir = '')
@@ -132,6 +133,8 @@ class Config
 
         $this->migrationDb    = $parts[0];
         $this->migrationTable = $parts[1];
+
+        $this->namePrefix = isset($params['name-prefix']) ? $params['name-prefix'] : '';
 
 
         // mysql driver will try to find the connection in .my.cnf

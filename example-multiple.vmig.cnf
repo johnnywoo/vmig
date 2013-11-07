@@ -15,6 +15,10 @@
 ;; List of tracked databases (separated by spaces)
 databases=migrations
 
+;; Name prefix to filter tables and other entities.
+;; This way you can have multiple vmig projects in a single database.
+name-prefix=
+
 ;; A table to store applied migrations. The table will be created if not exists;
 ;; database must exist.
 migrations-table=migrations.migrations

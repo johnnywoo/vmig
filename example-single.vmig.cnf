@@ -14,8 +14,12 @@
 ;; when you want to have multiple instances of your project to live on
 ;; the same DB server.
 
-;; Tracked database name (you can always override this by passing --single-database when invoking vmig)
+;; Tracked database name (you can always override this by passing --single-database when invoking vmig).
 single-database=
+
+;; Name prefix to filter tables and other entities.
+;; This way you can have multiple vmig projects in a single database.
+name-prefix=
 
 ;; A table to store applied migrations.
 ;; In single db mode you don't have to specify the database here.
