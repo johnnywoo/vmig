@@ -5,7 +5,7 @@ namespace Vmig;
 // you need to setup .my.cnf with correct connection info for mysql
 // mysql user should be able to create/drop database named "vmig_test"
 
-require_once __DIR__ . '/../lib/Vmig.php';
+require_once __DIR__ . '/../lib/Vmig/Vmig.php';
 
 class tVmig extends \PHPUnit_Framework_TestCase
 {

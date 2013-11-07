@@ -2,12 +2,12 @@
 
 namespace Vmig;
 
-require_once __DIR__ . '/Vmig/Config.php';
-require_once __DIR__ . '/Vmig/Dump.php';
-require_once __DIR__ . '/Vmig/Error.php';
-require_once __DIR__ . '/Vmig/Scheme.php';
-require_once __DIR__ . '/Vmig/SchemesDiff.php';
-require_once __DIR__ . '/Vmig/MysqlConnection.php';
+require_once __DIR__ . '/Config.php';
+require_once __DIR__ . '/Dump.php';
+require_once __DIR__ . '/Error.php';
+require_once __DIR__ . '/Scheme.php';
+require_once __DIR__ . '/SchemesDiff.php';
+require_once __DIR__ . '/MysqlConnection.php';
 
 class Vmig
 {
@@ -401,7 +401,7 @@ class Vmig
         $migration = trim($migration) . "\n";
 
         if ($this->config->singleDatabase) {
-            $db = $this->getDb()->escape($this->config->singleDatabase)
+            $db = $this->getDb()->escape($this->config->singleDatabase);
             $migration = "USE `{$db}`;\n" . $migration;
         }
         $this->getDb()->executeSqlScript($migration);

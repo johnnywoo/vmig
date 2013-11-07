@@ -3,7 +3,7 @@
 namespace Vmig;
 
 require_once __DIR__ . '/lib/Vmig/Config.php';
-require_once __DIR__ . '/lib/Vmig.php';
+require_once __DIR__ . '/lib/Vmig/Vmig.php';
 require_once __DIR__ . '/vendor/cliff/lib/Cliff/Cliff.php';
 
 use Cliff\Cliff;
