@@ -4,19 +4,16 @@ namespace Vmig;
 
 require_once __DIR__ . '/lib/Vmig/Config.php';
 require_once __DIR__ . '/lib/Vmig.php';
-require_once __DIR__ . '/vendor/cliff/lib/Cliff.php';
+require_once __DIR__ . '/vendor/cliff/lib/Cliff/Cliff.php';
 
-use cliff\Cliff;
-use cliff\Exception_ParseError;
-
-// STOPPER плюс надо сделать некий project-key, по которому мы фильтруем миграции, чтобы в одной базе могли жить несколько вмигов
-// STOPPER туда же делаем --name-prefix по которому фильтруем все сущности (может его же и сделать ключом проекта?)
+use Cliff\Cliff;
+use Cliff\Exception_ParseError;
 
 define('EXIT_OK',       0);
 define('EXIT_MODIFIED', 1);
 define('EXIT_ERROR',    2);
 
-Cliff::$error_exit_code = EXIT_ERROR;
+Cliff::$errorExitCode = EXIT_ERROR;
 Cliff::run(Cliff::config()
 
     ->desc('
@@ -119,7 +116,7 @@ Cliff::run(Cliff::config()
         ')
         ->param('name', array(
             'Migration name that goes into its filename',
-            'is_required' => false,
+            'isRequired' => false,
         ))
     )
 
@@ -129,11 +126,11 @@ Cliff::run(Cliff::config()
 
             You can tell vmig what to reset by setting db1, db2 etc.
         ')
-        ->many_params('db_or_table', array(
+        ->manyParams('db_or_table', array(
             'Database or table names to reset
 
             Format: `db[.table]`.',
-            'is_required' => false,
+            'isRequired' => false,
         ))
     )
 
@@ -144,9 +141,9 @@ Cliff::run(Cliff::config()
             If filenames are not given, all existing migrations will be marked.
             In this case database schemes will be dumped.
         ')
-        ->many_params('filename', array(
+        ->manyParams('filename', array(
             'Names of migrations to approve (without paths!)',
-            'is_required' => false,
+            'isRequired' => false,
         ))
     )
 
@@ -173,7 +170,7 @@ Cliff::run(Cliff::config()
         ->flag('--from-file -f',  'Use migration from filesystem')
         ->flag('--from-db -d',    'Use migration from database')
         ->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
-        ->many_params('filename', 'Names of migrations to apply (without paths!)')
+        ->manyParams('filename', 'Names of migrations to apply (without paths!)')
     )
 
     ->command('down', Cliff::config()
@@ -186,7 +183,7 @@ Cliff::run(Cliff::config()
         ->flag('--from-file -f',  'Use migration from filesystem')
         ->flag('--from-db -d',    'Use migration from database')
         ->flag('--no-execute -n', 'Do not execute any SQL, only manage approved status')
-        ->many_params('filename', 'Names of migrations to rollback (without paths!)')
+        ->manyParams('filename', 'Names of migrations to rollback (without paths!)')
     )
 );
 
